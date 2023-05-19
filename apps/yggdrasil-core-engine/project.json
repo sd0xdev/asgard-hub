@@ -1,0 +1,64 @@
+{
+  "name": "yggdrasil-core-engine",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/yggdrasil-core-engine/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/yggdrasil-core-engine",
+        "main": "apps/yggdrasil-core-engine/src/main.ts",
+        "tsConfig": "apps/yggdrasil-core-engine/tsconfig.app.json",
+        "assets": ["apps/yggdrasil-core-engine/src/assets"],
+        "isolatedConfig": true,
+        "webpackConfig": "apps/yggdrasil-core-engine/webpack.config.js"
+      },
+      "configurations": {
+        "development": {},
+        "production": {}
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "yggdrasil-core-engine:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "yggdrasil-core-engine:build:development"
+        },
+        "production": {
+          "buildTarget": "yggdrasil-core-engine:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/yggdrasil-core-engine/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/yggdrasil-core-engine/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
+      }
+    }
+  },
+  "tags": []
+}
