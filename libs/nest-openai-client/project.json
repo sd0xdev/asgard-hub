@@ -1,0 +1,45 @@
+{
+  "name": "nest-openai-client",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/nest-openai-client/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/nest-openai-client",
+        "tsConfig": "libs/nest-openai-client/tsconfig.lib.json",
+        "packageJson": "libs/nest-openai-client/package.json",
+        "main": "libs/nest-openai-client/src/index.ts",
+        "assets": ["libs/nest-openai-client/*.md"]
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs nest-openai-client {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["libs/nest-openai-client/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/nest-openai-client/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
+      }
+    }
+  },
+  "tags": []
+}

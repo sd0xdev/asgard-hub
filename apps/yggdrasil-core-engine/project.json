@@ -16,7 +16,8 @@
         "tsConfig": "apps/yggdrasil-core-engine/tsconfig.app.json",
         "assets": ["apps/yggdrasil-core-engine/src/assets"],
         "isolatedConfig": true,
-        "webpackConfig": "apps/yggdrasil-core-engine/webpack.config.js"
+        "webpackConfig": "apps/yggdrasil-core-engine/webpack.config.js",
+        "generatePackageJson": true
       },
       "configurations": {
         "development": {},

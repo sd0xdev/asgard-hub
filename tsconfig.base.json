@@ -14,7 +14,11 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@asgard-hub/nest-winston": ["libs/nest-winston/src/index.ts"],
+      "@asgard-hub/utils": ["libs/utils/src/index.ts"],
+      "@sd0x/nest-openai-client": ["libs/nest-openai-client/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

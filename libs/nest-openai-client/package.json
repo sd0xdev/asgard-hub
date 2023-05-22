@@ -1,0 +1,17 @@
+{
+  "name": "@sd0x/nest-openai-client",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sd0xdev/asgard-hub/tree/main/libs/nest-openai-client"
+  },
+  "version": "0.0.8",
+  "type": "commonjs",
+  "keywords": [
+    "nestjs",
+    "openai",
+    "client"
+  ],
+  "dependencies": {
+    "tslib": "^2.0.0"
+  }
+}

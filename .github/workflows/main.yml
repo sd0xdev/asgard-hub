@@ -1,0 +1,17 @@
+name: CI
+on:
+  push:
+    branches:
+      - '*'
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - run: npm ci
+
+      - run: npx nx run yggdrasil-core-engine:lint
+      - run: npx nx run yggdrasil-core-engine:test --watch=false --configuration=ci
+      - run: npx nx run yggdrasil-core-engine:build
