@@ -4,13 +4,27 @@
     "type": "git",
     "url": "https://github.com/sd0xdev/asgard-hub/tree/main/libs/nest-openai-client"
   },
-  "version": "0.0.8",
+  "version": "0.0.9",
+  "license": "MIT",
+  "author": "sd0x <software.develop.0x@gmail.com>",
+  "description": "NestJS OpenAI Client",
   "type": "commonjs",
   "keywords": [
     "nestjs",
     "openai",
+    "openai-api",
+    "ai",
+    "gpt3",
+    "gpt-3",
+    "gpt-3.5",
     "client"
   ],
+  "homepage": "https://github.com/sd0xdev/asgard-hub/tree/main/libs/nest-openai-client",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "tslib": "^2.0.0"
   }
