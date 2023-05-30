@@ -10,15 +10,12 @@ import {
   isProd,
 } from './constants/common.constant';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigPath, IAppConfig, appConfig } from './config/app.config';
 import {
-  ConfigPath,
-  IAppConfig,
   IAzureOpenAIConfig,
-  IOpenAIConfig,
-  appConfig,
   azureOpenAIConfig,
-  openAIConfig,
-} from './config/app.config';
+} from './config/azure.openai.config';
+import { IOpenAIConfig, openAIConfig } from './config/open.ai.config';
 import { NestWinstonModule } from '@asgard-hub/nest-winston';
 import { NestOpenAIClientModule } from '@sd0x/nest-openai-client';
 

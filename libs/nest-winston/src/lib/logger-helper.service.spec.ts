@@ -1,9 +1,8 @@
 import { Test } from '@nestjs/testing';
 
 import { LoggerHelperService } from './logger-helper.service';
-import winston = require('winston');
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { NEST_WINSTON_MODULE_OPTIONS } from '../constants/hahow-nest-winston.constants';
+import { NEST_WINSTON_MODULE_OPTIONS } from '../constants/nest-winston.constants';
 
 describe('LoggerHelperService', () => {
   let service: LoggerHelperService;
