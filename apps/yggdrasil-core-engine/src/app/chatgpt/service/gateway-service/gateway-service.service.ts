@@ -1,11 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { YTChatGPTService } from '../yt-chat-gpt/yt-chat-gpt.service';
 import { PDFChatGPTService } from '../pdf-chat-gpt/pdf-chat-gpt.service';
-import { BaseFeatureChatGPTService } from '../base-feature-chat-gpt.service';
 import { TXTChatGptService as TXTChatGptService } from '../txt-chat-gpt/txt-chat-gpt.service';
 import { URLChatGPTService } from '../url-chat-gpt/url-chat-gpt.service';
 import { ImageChatGptService } from '../image-chat-gpt/image-chat-gpt.service';
-import { BaseDataSourceAdapter } from '../../../data-source-adapter/adapter/interface/data-source-adapter.interface';
 import { AudioChatGPTService } from '../audio-chat-gpt/audio-chat-gpt.service';
 
 @Injectable()
@@ -16,7 +14,7 @@ export class GatewayService {
     private readonly txtService: TXTChatGptService,
     private readonly urlService: URLChatGPTService,
     private readonly imageService: ImageChatGptService,
-    private readonly audioService: AudioChatGPTService,
+    private readonly audioService: AudioChatGPTService
   ) {}
 
   getFeatureService<T>(feature: GatewayFeature): T {

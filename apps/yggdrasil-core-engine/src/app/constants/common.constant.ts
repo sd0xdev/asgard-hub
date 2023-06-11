@@ -1,7 +1,7 @@
 import { resolve } from 'path';
 
 // Config
-export const CONFIG_DIR = 'assets';
+export const ASSETS_DIR = 'assets';
 export const ENV_FILE_LOCAL = '.env.local';
 
 export const isDev =
@@ -11,6 +11,10 @@ export const isStaging = process.env.NODE_ENV === 'staging';
 export const isProd = process.env.NODE_ENV === 'production';
 
 export const API_ROUTE = '/api/*';
-export const envFilePath = process.env['IS_DEBUG']
-  ? resolve(__dirname, '..', '..', CONFIG_DIR, ENV_FILE_LOCAL)
-  : resolve(__dirname, CONFIG_DIR, ENV_FILE_LOCAL);
+export const envFilePath = () => {
+  const path = process.env['IS_DEBUG']
+    ? resolve(__dirname, '..', '..', ASSETS_DIR, ENV_FILE_LOCAL)
+    : resolve(__dirname, '.', ASSETS_DIR, ENV_FILE_LOCAL);
+
+  return path;
+};

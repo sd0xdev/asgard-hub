@@ -14,7 +14,7 @@ export class CloudErrorReportingService implements OnApplicationBootstrap {
         '..',
         'static',
         'key-files',
-        'general-382514-77d9e50805af.json',
+        'general-382514-77d9e50805af.json'
       ),
       reportMode:
         process.env.NODE_ENV === 'production' ? 'production' : 'always',

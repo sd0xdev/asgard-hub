@@ -21,6 +21,7 @@ export interface IAppConfig {
   serviceZone: string;
   serviceCluster: string;
   serviceNamespace: string;
+  serviceApiKey: string;
   tempDirPath: string;
 }
 
@@ -41,6 +42,7 @@ export const appConfig = registerAs(ConfigPath.APP, () => {
     serviceRegion: process.env.SERVICE_REGION,
     serviceZone: process.env.SERVICE_ZONE,
     serviceCluster: process.env.SERVICE_CLUSTER,
+    serviceApiKey: process.env.CORE_ENGINE_API_KEY,
     serviceNamespace: process.env.SERVICE_NAMESPACE,
     tempDirPath,
   };

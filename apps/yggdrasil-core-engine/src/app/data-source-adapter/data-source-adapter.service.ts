@@ -16,11 +16,11 @@ export class DataSourceAdapterService {
     private readonly txtAdapter: TXTAdapter,
     private readonly urlAdapter: URLAdapter,
     private readonly imageAdapter: ImageAdapter,
-    private readonly ytAdapter: YoutubeAdapter,
+    private readonly ytAdapter: YoutubeAdapter
   ) {}
 
   getAdapter<T extends BaseDataSourceAdapter>(
-    dataSourceType: DataSourceType,
+    dataSourceType: DataSourceType
   ): T {
     switch (dataSourceType) {
       case DataSourceType.PDF:

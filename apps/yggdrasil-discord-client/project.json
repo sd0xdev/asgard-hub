@@ -1,0 +1,64 @@
+{
+  "name": "yggdrasil-discord-client",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/yggdrasil-discord-client/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/yggdrasil-discord-client",
+        "main": "apps/yggdrasil-discord-client/src/main.ts",
+        "tsConfig": "apps/yggdrasil-discord-client/tsconfig.app.json",
+        "assets": ["apps/yggdrasil-discord-client/src/assets"],
+        "isolatedConfig": true,
+        "webpackConfig": "apps/yggdrasil-discord-client/webpack.config.js"
+      },
+      "configurations": {
+        "development": {},
+        "production": {}
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "yggdrasil-discord-client:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "yggdrasil-discord-client:build:development"
+        },
+        "production": {
+          "buildTarget": "yggdrasil-discord-client:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/yggdrasil-discord-client/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/yggdrasil-discord-client/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
+      }
+    }
+  },
+  "tags": []
+}

@@ -8,7 +8,7 @@ export interface IMongoDBConfig {
 }
 
 export const mongoDBConfig = registerAs(ConfigPath.MongoDB, () => ({
-  uri: process.env.MONGODB_URI,
-  user: process.env.MONGODB_USER,
-  pass: process.env.MONGODB_PASSWORD,
+  uri: process.env.MONGO_DB_URI,
+  user: process.env.MONGO_DB_USER,
+  pass: process.env.MONGO_DB_PASSWORD,
 }));

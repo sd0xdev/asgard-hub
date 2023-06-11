@@ -8,7 +8,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 export class YoutubeDataService {
   constructor(
     @InjectModel(YTData.name)
-    private readonly YTDataModel: Model<YTData>,
+    private readonly YTDataModel: Model<YTData>
   ) {}
 
   // create a new Data
@@ -38,7 +38,7 @@ export class YoutubeDataService {
       {
         channelId: data.channelId,
         data: data.data,
-      },
+      }
     );
 
     return updatedData.acknowledged;

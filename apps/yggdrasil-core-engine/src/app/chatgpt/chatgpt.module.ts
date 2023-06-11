@@ -10,9 +10,30 @@ import { ChatGPTController } from '../controllers/chatgpt.controller';
 import { ServiceModule } from '../services/service.module';
 import { DataSourceAdapterModule } from '../data-source-adapter/data-source-adapter.module';
 import { AudioChatGPTService } from './service/audio-chat-gpt/audio-chat-gpt.service';
+import { ConfigService } from '@nestjs/config';
+import { NestWinstonModule } from '@asgard-hub/nest-winston';
+import { IAppConfig, ConfigPath } from '../config/app.config';
+import { isDev, isStaging, isProd } from '../constants/common.constant';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 
 @Module({
-  imports: [MongoModule, ServiceModule, DataSourceAdapterModule],
+  imports: [
+    EventEmitterModule.forRoot(),
+    NestWinstonModule.registerAsync({
+      useFactory: (configService: ConfigService) => ({
+        runtime: {
+          isDev,
+          isStaging,
+          isProd,
+        },
+        packageName: configService.get<IAppConfig>(ConfigPath.APP).packageName,
+      }),
+      inject: [ConfigService],
+    }),
+    MongoModule,
+    ServiceModule,
+    DataSourceAdapterModule,
+  ],
   providers: [
     YTChatGPTService,
     URLChatGPTService,

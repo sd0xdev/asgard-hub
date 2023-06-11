@@ -8,7 +8,7 @@ describe('AuthGuard', () => {
 
   it('should be defined', () => {
     expect(
-      new AuthGuard(mockLoggerHelperService, mockConfigService),
+      new AuthGuard(mockLoggerHelperService, mockConfigService)
     ).toBeDefined();
   });
 });

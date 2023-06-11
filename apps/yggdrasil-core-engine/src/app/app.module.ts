@@ -11,24 +11,22 @@ import {
 } from './constants/common.constant';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ConfigPath, IAppConfig, appConfig } from './config/app.config';
-import {
-  IAzureOpenAIConfig,
-  azureOpenAIConfig,
-} from './config/azure.openai.config';
-import { IOpenAIConfig, openAIConfig } from './config/open.ai.config';
+import { azureOpenAIConfig } from './config/azure.openai.config';
+import { openAIConfig } from './config/open.ai.config';
 import { NestWinstonModule } from '@asgard-hub/nest-winston';
-import { NestOpenAIClientModule } from '@sd0x/nest-openai-client';
+import { ChatGPTModule } from './chatgpt/chatgpt.module';
+import { mongoDBConfig } from './config/mongo.db.config';
 
 @Module({
   imports: [
     isTest
       ? ConfigModule.forRoot({ isGlobal: true })
       : ConfigModule.forRoot({
-          envFilePath,
+          envFilePath: envFilePath(),
           isGlobal: true,
           cache: true,
           // for local development
-          load: [appConfig, openAIConfig, azureOpenAIConfig],
+          load: [appConfig, openAIConfig, azureOpenAIConfig, mongoDBConfig],
           // if NODE_ENV is not development, ignore .env file
           ignoreEnvFile: !isDev,
           expandVariables: true,
@@ -44,26 +42,7 @@ import { NestOpenAIClientModule } from '@sd0x/nest-openai-client';
       }),
       inject: [ConfigService],
     }),
-    NestOpenAIClientModule.registerAsync({
-      useFactory: (configService: ConfigService) => ({
-        apiKey: configService.get<IOpenAIConfig>(ConfigPath.OpenAI).apiKey,
-        azure: configService.get<IAzureOpenAIConfig>(ConfigPath.AzureOpenAI)
-          .enable
-          ? {
-              apiKey: configService.get<IAzureOpenAIConfig>(
-                ConfigPath.AzureOpenAI
-              ).apiKey,
-              endpoint: configService.get<IAzureOpenAIConfig>(
-                ConfigPath.AzureOpenAI
-              ).endpoint,
-              deploymentName: configService.get<IAzureOpenAIConfig>(
-                ConfigPath.AzureOpenAI
-              ).deploymentName,
-            }
-          : undefined,
-      }),
-      inject: [ConfigService],
-    }),
+    ChatGPTModule,
   ],
   controllers: [AppController],
   providers: [ConfigService, AppService],

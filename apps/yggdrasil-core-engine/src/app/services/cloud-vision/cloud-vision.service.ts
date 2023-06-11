@@ -15,13 +15,13 @@ export class CloudVisionService implements OnApplicationBootstrap {
         '..',
         'static',
         'key-files',
-        'general-382514-77d9e50805af.json',
+        'general-382514-77d9e50805af.json'
       ),
     });
   }
 
   async getImageText(
-    imageUrl: string,
+    imageUrl: string
   ): Promise<google.cloud.vision.v1.IEntityAnnotation[]> {
     // Performs text detection on the gcs file
     const [result] = await this.client.documentTextDetection(imageUrl);

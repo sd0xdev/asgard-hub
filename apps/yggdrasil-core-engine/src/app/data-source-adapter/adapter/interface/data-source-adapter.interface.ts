@@ -1,5 +1,3 @@
-import { Injectable } from '@nestjs/common';
-
 export interface IDataSourceAdapter {
   getData<T>(url: string): Promise<T>;
   getDataFromPath<T>(path: string, asExtension: string): Promise<T>;
@@ -19,7 +17,7 @@ export abstract class BaseDataSourceAdapter implements IDataSourceAdapter {
 
   public async getDataFormUrlSaveAsPath(
     url: string,
-    asExtension: string,
+    asExtension: string
   ): Promise<string> {
     throw new Error('Method not implemented.');
   }

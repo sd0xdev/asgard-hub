@@ -8,7 +8,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 export class YoutubeRecordService {
   constructor(
     @InjectModel(YTRecord.name)
-    private readonly ytRecordModel: Model<YTRecord>,
+    private readonly ytRecordModel: Model<YTRecord>
   ) {}
 
   // create a new record
@@ -45,7 +45,7 @@ export class YoutubeRecordService {
       },
       {
         multi: true,
-      },
+      }
     );
 
     return updatedRecord.acknowledged;

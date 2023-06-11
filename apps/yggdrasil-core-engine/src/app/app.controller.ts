@@ -5,14 +5,4 @@ import { AppService } from './app.service';
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
-
-  @Get()
-  async getData() {
-    return await this.appService.getData();
-  }
-
-  @Get('azure')
-  async getDataFromAzure() {
-    return await this.appService.getDataFromAzure();
-  }
 }

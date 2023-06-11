@@ -29,7 +29,7 @@ export class YoutubeDlService {
       '..',
       'downloads',
       'audio',
-      `${uuid}.mp3`,
+      `${uuid}.mp3`
     );
 
     // get info video time

@@ -1,4 +1,3 @@
-
 import { YoutubeDataService } from './youtube-data.service';
 import { YTData } from '../../mongo/schemas/yt.data.schema';
 
@@ -34,7 +33,7 @@ describe('YoutubeDataService', () => {
     expect(result).toBe(true);
     expect(mockYTDataModel.updateOne).toHaveBeenCalledWith(
       { ytId: mockData.ytId },
-      { channelId: mockData.channelId, data: mockData.data },
+      { channelId: mockData.channelId, data: mockData.data }
     );
   });
 

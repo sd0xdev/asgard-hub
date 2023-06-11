@@ -6,6 +6,7 @@ import {
   LoggerHelperService,
 } from '@asgard-hub/nest-winston';
 import { ConfigService } from '@nestjs/config';
+import { ConfigPath, IAppConfig } from '../config/app.config';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -27,6 +28,9 @@ export class AuthGuard implements CanActivate {
     }
     const apiKey = metadata.get('authorization')[0];
     // TODO: fix this
-    return apiKey === this.configService.get('rpcApiKey');
+    return (
+      apiKey ===
+      this.configService.get<IAppConfig>(ConfigPath.APP).serviceApiKey
+    );
   }
 }

@@ -44,7 +44,7 @@ describe('YoutubeDataService', () => {
     expect(result).toBe(true);
     expect(mockModel.updateOne).toHaveBeenCalledWith(
       { url: mockRecord.url },
-      { ...mockRecord },
+      { ...mockRecord }
     );
     expect(mockModel.findOne).toHaveBeenCalledWith({ url: mockRecord.url });
   });

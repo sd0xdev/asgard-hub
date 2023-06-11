@@ -7,11 +7,28 @@ jobs:
   main:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Setup Checkout
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - run: npm ci
 
-      - run: npx nx run yggdrasil-core-engine:lint
-      - run: npx nx run yggdrasil-core-engine:test --watch=false --configuration=ci
-      - run: npx nx run yggdrasil-core-engine:build
+      - name: Setup Node.js
+        uses: nrwl/nx-set-shas@v3
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npx nx affected:lint --parallel=3
+
+      - name: Build
+        run: npx nx affected:build --parallel=3
+
+      - name: Test
+        run: npx nx affected:test --parallel=3 --ci --code-coverage
+
+      - name: Upload unit tests coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage/apps/yggdrasil-core-engine/lcov.info,./coverage/apps/yggdrasil-discord-client/lcov.info,./coverage/libs/nest-openai-client/lcov.info,./coverage/libs/nest-winston/lcov.info,./coverage/libs/utils/lcov.info

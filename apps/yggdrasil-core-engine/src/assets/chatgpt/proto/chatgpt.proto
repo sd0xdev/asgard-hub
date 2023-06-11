@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package chatgpt;
+
+service ChatGPTService {
+  rpc GeneralMessages (GeneralMessageOptions) returns (ChatCompletionResponseMessages);
+  rpc FetchGgtResponse (GetGPTResponseOptions) returns (CreateChatCompletionResponse);
+  rpc FetchGgtResponseStream (GetGPTResponseOptions) returns (CreateChatCompletionResponses);
+  rpc GetCompletionResponse (GetCompletionResponseOptions) returns (CreateChatCompletionResponse);
+  rpc FetchYoutubeSummary (YoutubeSummaryRequest) returns (CreateChatCompletionResponses);
+  rpc FetchUrlDocSummary (URLDocSummaryRequest) returns (CreateChatCompletionResponses);
+  rpc FetchAudioTranscription (AudioChatRequest) returns (CreateChatTranscriptionResponses);
+}
+
+message GeneralMessageOptions {
+  string chant = 1;
+  CustomPrompt customPrompt = 2;
+}
+
+message CustomPrompt {
+  string title = 1;
+  string linguisticFraming = 2;
+}
+
+message ChatCompletionRequestMessage {
+    string role = 1;
+    string content = 2;
+    string name = 3;
+}
+
+message ChatCompletionResponseMessages {
+    repeated ChatCompletionRequestMessage messages = 1;
+}
+
+message GetGPTRequestOptions {
+  bool useStream = 1;
+  int64 maxTokens = 2;
+}
+
+message GetGPTResponseOptions {
+  repeated ChatCompletionRequestMessage contents = 1;
+  string user = 2;
+  double temperature = 3;
+  GetGPTRequestOptions options = 4;
+}
+
+message GetCompletionResponseOptions {
+  string prompt = 1;
+  string model = 2;
+}
+
+message CreateChatCompletionResponse {
+  string id = 1;
+  string object = 2;
+  int64 created = 3;
+  repeated Choice choices = 4;
+  Usage usage = 5;
+}
+
+message CreateChatCompletionResponses {
+  repeated CreateChatCompletionResponse responses = 1;
+}
+
+message PartCreateTranscriptionResponse {
+  string text = 1;
+  int32 partNumber = 2;
+}
+
+message CreateChatTranscriptionResponses {
+  repeated PartCreateTranscriptionResponse responses = 1;
+}
+
+message YoutubeSummaryRequest {
+  string url = 1;
+  string user = 2;
+  bool isForced = 3;
+  SummaryRequestOptions options = 4;
+}
+
+message URLDocSummaryRequest {
+  string url = 1;
+  string user = 2;
+  bool isForced = 3;
+  string dataSourceType = 4;
+  SummaryRequestOptions options = 5;
+}
+
+message AudioChatRequest {
+  string url = 1;
+  string fileExtension = 2;
+  bool isForce = 3;
+}
+
+message SummaryRequestOptions {
+  string userExpectation = 1;
+}
+
+message Choice {
+  int32 index = 1;
+  Message message = 2;
+  string finishReason = 3;
+  string text = 4;
+  Message delta = 5;
+}
+
+message Message {
+  string role = 1;
+  string content = 2;
+}
+
+message Usage {
+  int32 promptTokens = 1;
+  int32 completionTokens = 2;
+  int32 totalTokens = 3;
+}

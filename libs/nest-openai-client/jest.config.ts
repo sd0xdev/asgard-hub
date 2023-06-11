@@ -8,4 +8,5 @@ export default {
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../coverage/libs/nest-openai-client',
+  coverageReporters: ['lcov'],
 };

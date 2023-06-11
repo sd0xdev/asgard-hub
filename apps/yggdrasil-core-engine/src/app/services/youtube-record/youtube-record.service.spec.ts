@@ -70,7 +70,7 @@ describe('YoutubeRecordService', () => {
         duration: record.duration,
         response: record.response,
       },
-      { multi: true },
+      { multi: true }
     );
   });
   it('test_create_record_already_exists', async () => {

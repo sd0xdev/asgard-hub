@@ -19,12 +19,12 @@ export class YAudioTranscriptionService {
 
   constructor(
     @InjectModel(YAudioTranscription.name)
-    private readonly yAudioTranscriptionModel: Model<YAudioTranscription>,
+    private readonly yAudioTranscriptionModel: Model<YAudioTranscription>
   ) {}
 
   // create a new record
   async createRecord(
-    record: YAudioTranscription,
+    record: YAudioTranscription
   ): Promise<YAudioTranscription> {
     // check if the record already exists, if so, return the record
     const findRecord = await this.findRecordByUrl(record.url);
@@ -50,7 +50,7 @@ export class YAudioTranscriptionService {
       { url: record.url },
       {
         ...record,
-      },
+      }
     );
 
     return updatedRecord.acknowledged;
