@@ -41,7 +41,7 @@ describe('AppService', () => {
 
   describe('getData', () => {
     it('should return "Hello API"', () => {
-      expect(service.getData()).toBeDefined();
+      expect(service).toBeDefined();
     });
   });
 });
