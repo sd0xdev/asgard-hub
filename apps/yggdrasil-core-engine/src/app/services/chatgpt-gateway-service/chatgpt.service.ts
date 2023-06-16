@@ -3,6 +3,7 @@ import { ChatGPTChant } from '@asgard-hub/utils';
 import {
   ChatCompletionRequestMessage,
   CreateChatCompletionResponse,
+  OpenAIApi,
 } from 'openai';
 import { CreateCompletionResponseUsageForRPC } from '../../chatgpt/interface/create.completion.response.usage.for.rpc.interface';
 import { createReadStream } from 'fs';

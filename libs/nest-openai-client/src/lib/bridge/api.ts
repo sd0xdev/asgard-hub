@@ -33,32 +33,15 @@ import {
 import type { RequestArgs } from './base';
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError } from './base';
+import { ChatCompletionRequestMessage as OfficinalChatCompletionRequestMessage } from 'openai';
 
 /**
  *
  * @export
  * @interface ChatCompletionRequestMessage
  */
-export interface ChatCompletionRequestMessage {
-  /**
-   * The role of the author of this message.
-   * @type {string}
-   * @memberof ChatCompletionRequestMessage
-   */
-  role: ChatCompletionRequestMessageRoleEnum;
-  /**
-   * The contents of the message
-   * @type {string}
-   * @memberof ChatCompletionRequestMessage
-   */
-  content: string;
-  /**
-   * The name of the user in a multi-user chat
-   * @type {string}
-   * @memberof ChatCompletionRequestMessage
-   */
-  name?: string;
-}
+export type ChatCompletionRequestMessage =
+  OfficinalChatCompletionRequestMessage;
 
 export const ChatCompletionRequestMessageRoleEnum = {
   System: 'system',
@@ -67,7 +50,7 @@ export const ChatCompletionRequestMessageRoleEnum = {
 } as const;
 
 export type ChatCompletionRequestMessageRoleEnum =
-  typeof ChatCompletionRequestMessageRoleEnum[keyof typeof ChatCompletionRequestMessageRoleEnum];
+  (typeof ChatCompletionRequestMessageRoleEnum)[keyof typeof ChatCompletionRequestMessageRoleEnum];
 
 /**
  *
@@ -96,7 +79,7 @@ export const ChatCompletionResponseMessageRoleEnum = {
 } as const;
 
 export type ChatCompletionResponseMessageRoleEnum =
-  typeof ChatCompletionResponseMessageRoleEnum[keyof typeof ChatCompletionResponseMessageRoleEnum];
+  (typeof ChatCompletionResponseMessageRoleEnum)[keyof typeof ChatCompletionResponseMessageRoleEnum];
 
 /**
  *
@@ -1161,14 +1144,14 @@ export const CreateImageRequestSizeEnum = {
 } as const;
 
 export type CreateImageRequestSizeEnum =
-  typeof CreateImageRequestSizeEnum[keyof typeof CreateImageRequestSizeEnum];
+  (typeof CreateImageRequestSizeEnum)[keyof typeof CreateImageRequestSizeEnum];
 export const CreateImageRequestResponseFormatEnum = {
   Url: 'url',
   B64Json: 'b64_json',
 } as const;
 
 export type CreateImageRequestResponseFormatEnum =
-  typeof CreateImageRequestResponseFormatEnum[keyof typeof CreateImageRequestResponseFormatEnum];
+  (typeof CreateImageRequestResponseFormatEnum)[keyof typeof CreateImageRequestResponseFormatEnum];
 
 /**
  *
