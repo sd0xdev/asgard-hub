@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { DataSourceType } from '../../../data-source-adapter/adapter/interface/data-source-type.enum';
 import { BaseFeatureChatGPTService } from '../base-feature-chat-gpt.service';
 import { DataSourceAdapterService } from '../../../data-source-adapter/data-source-adapter.service';
-import { LoggerHelperService } from '@asgard-hub/nest-winston';
+import { AsgardLogger } from '@asgard-hub/nest-winston';
 import { PDFChatGPTService } from '../pdf-chat-gpt/pdf-chat-gpt.service';
 import { PartCreateTranscriptionResponse } from '../../interface/create.completion.response.usage.for.rpc.interface';
 import { AudioAdapter } from '../../../data-source-adapter/adapter/audio-adapter';
@@ -26,13 +26,12 @@ export class AudioChatGPTService extends BaseFeatureChatGPTService<AudioAdapter>
   private readonly maxParts = 30;
 
   constructor(
-    loggerHelperService: LoggerHelperService,
+    private readonly asgardLogger: AsgardLogger,
     protected readonly dataSourceAdapterService: DataSourceAdapterService,
     protected readonly eventEmitter: EventEmitter2,
     protected readonly yAudioTranscriptionService: YAudioTranscriptionService
   ) {
     super(
-      loggerHelperService,
       dataSourceAdapterService,
       DataSourceType.AUDIO,
       PDFChatGPTService.name
@@ -42,10 +41,6 @@ export class AudioChatGPTService extends BaseFeatureChatGPTService<AudioAdapter>
   async fetchDataByDataSourceUrl(
     data: AudioChatOptions
   ): Promise<PartCreateTranscriptionResponse[]> {
-    const { log, error } = this.trackerLoggerCreator.create(
-      'fetchDataByDataSourceUrl'
-    );
-
     const { url, fileExtension } = data;
 
     // check cache by url
@@ -57,11 +52,11 @@ export class AudioChatGPTService extends BaseFeatureChatGPTService<AudioAdapter>
       cachedTranscriptions &&
       cachedTranscriptions.data?.length > 0
     ) {
-      log(`cached ${url}`);
+      this.asgardLogger.log(`cached ${url}`);
       return cachedTranscriptions.data;
     }
 
-    log(`called ${url}`);
+    this.asgardLogger.log(`called ${url}`);
 
     const transcriptions = await this.setupTranscription(url, fileExtension);
 
@@ -81,17 +76,14 @@ export class AudioChatGPTService extends BaseFeatureChatGPTService<AudioAdapter>
   }
 
   private async setupTranscription(url: string, fileExtension: string) {
-    const { log, error } =
-      this.trackerLoggerCreator.create('setupTranscription');
-
-    log('audio download start...');
+    this.asgardLogger.log('audio download start...');
     // download file from url and save to path
     const audioFilePath =
       await this.getAdapter().getDataFormUrlSaveAsPath<string>(
         url,
         DownloadFileType[fileExtension]
       );
-    log('audio download end...');
+    this.asgardLogger.log('audio download end...');
 
     // need to split audio file to 180 seconds
     const paths = (await splitAudioFile(audioFilePath, 180)).slice(
@@ -108,7 +100,7 @@ export class AudioChatGPTService extends BaseFeatureChatGPTService<AudioAdapter>
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }) + '%';
-        log(`percentage: ${formatted}`);
+        this.asgardLogger.log(`percentage: ${formatted}`);
         await delay(Math.random() * 500 + 256);
       })
       .process(async (path, index, pool) => {
@@ -124,7 +116,7 @@ export class AudioChatGPTService extends BaseFeatureChatGPTService<AudioAdapter>
       });
 
     promisePool.errors?.length > 0 &&
-      promisePool.errors.forEach((e) => error(e.raw, e.stack, e));
+      promisePool.errors.forEach((e) => this.asgardLogger.error(e.raw, e.stack, e));
     const results = promisePool.results.filter(
       (r) => r !== undefined && (r as any) !== Symbol.for('failed')
     );

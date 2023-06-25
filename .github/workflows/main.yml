@@ -32,3 +32,15 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           file: ./coverage/apps/yggdrasil-core-engine/lcov.info,./coverage/apps/yggdrasil-discord-client/lcov.info,./coverage/libs/nest-openai-client/lcov.info,./coverage/libs/nest-winston/lcov.info,./coverage/libs/utils/lcov.info
+  push_to_gitlab:
+    # if branch is develop, push to gitlab develop branch
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    needs: main
+    steps:
+      - name: Push to GitLab
+        uses: actions/checkout@v3
+      - name: Push to GitLab
+        run: |
+          git fetch --unshallow
+          git push https://yasuoyuhao:${{secrets.GITLAB_TOKEN}}@gitlab.com/welfree-studio/asgard-hub.git develop -f

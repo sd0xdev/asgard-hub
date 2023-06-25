@@ -42,3 +42,6 @@ Thumbs.db
 
 # local env files
 .env.local
+
+#docker file
+docker-data/

@@ -2,10 +2,7 @@ import { DataSourceType } from '../../data-source-adapter/adapter/interface/data
 import { DataSourceAdapterService } from '../../data-source-adapter/data-source-adapter.service';
 import { PartCreateChatCompletionResponse } from '../interface/create.completion.response.usage.for.rpc.interface';
 import { BaseDataSourceAdapter } from '../../data-source-adapter/adapter/interface/data-source-adapter.interface';
-import {
-  TrackerLoggerCreator,
-  LoggerHelperService,
-} from '@asgard-hub/nest-winston';
+import {} from '@asgard-hub/nest-winston';
 import { splitString } from '@asgard-hub/utils';
 
 export interface BaseFeatureChatGPTServiceInterface {
@@ -15,16 +12,12 @@ export interface BaseFeatureChatGPTServiceInterface {
 export abstract class BaseFeatureChatGPTService<T extends BaseDataSourceAdapter>
   implements BaseFeatureChatGPTServiceInterface
 {
-  protected trackerLoggerCreator: TrackerLoggerCreator;
   protected temperature = 0.5;
   constructor(
-    loggerHelperService: LoggerHelperService,
     protected readonly dataSourceAdapterService: DataSourceAdapterService,
     protected readonly dataSourceType: string,
-    name: string
-  ) {
-    this.trackerLoggerCreator = loggerHelperService.create(name);
-  }
+    protected readonly name: string
+  ) {}
 
   fetchDataByDataSourceUrl(data: any): Promise<any> {
     throw new Error('Method not implemented.');

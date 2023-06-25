@@ -16,7 +16,6 @@ import {
   isTest,
 } from './discord-bot/constants/common.constant';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { resolve } from 'path';
 import { IRedisConfig, redisConfig } from './config/redis.config';
 import {
   ICoreEngineConfig,

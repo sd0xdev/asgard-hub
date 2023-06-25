@@ -4,10 +4,6 @@ import { CreateChatCompletionResponse } from 'openai';
 import pdfParse from 'pdf-parse';
 import { lastValueFrom } from 'rxjs';
 import {
-  TrackerLoggerCreator,
-  LoggerHelperService,
-} from '@asgard-hub/nest-winston';
-import {
   DISCORD_BOT_MODULE_OPTIONS,
   GPT_3_5_CHAR_URL_COUNT,
 } from '../../constants/discord-bot.constants';
@@ -18,25 +14,21 @@ import * as cheerio from 'cheerio';
 import { DiscordBotModuleOptions } from '../../interface/discord-bot-module';
 import { ChatGPTChant } from '../../interface/chatgpt-chant.enum';
 import { ChatGPTService } from '../../interface/chatgpt.service.interface';
+import { AsgardLogger } from '@asgard-hub/nest-winston';
 
 @Injectable()
 export class SetupKeywordService implements OnModuleInit {
-  private readonly trackerLoggerCreator: TrackerLoggerCreator;
   private chatGPTService: ChatGPTService;
   private metadata = new Metadata();
 
   constructor(
-    loggerHelperService: LoggerHelperService,
+    private readonly asgardLogger: AsgardLogger,
     @Inject(DISCORD_BOT_MODULE_OPTIONS)
     private readonly options: DiscordBotModuleOptions,
     @Inject('CHATGPT_PACKAGE')
     private readonly grpcClient: ClientGrpc,
     private readonly httpService: HttpService
-  ) {
-    this.trackerLoggerCreator = loggerHelperService.create(
-      SetupKeywordService.name
-    );
-  }
+  ) {}
 
   async onModuleInit() {
     this.chatGPTService = await this.grpcClient.getService<ChatGPTService>(
@@ -51,9 +43,7 @@ export class SetupKeywordService implements OnModuleInit {
     chant: ChatGPTChant,
     message: Message<boolean>
   ) {
-    const { log } = this.trackerLoggerCreator.create(`EVENT: setupKeyword`);
-
-    log(`----- start -----`);
+    this.asgardLogger.log(`----- start -----`);
 
     // url Helper
     if (content.startsWith('http')) {
@@ -423,15 +413,13 @@ export class SetupKeywordService implements OnModuleInit {
       content = `優化: ${content.replace('coe', '').trim()}\n\n建議:`;
     }
 
-    log(`----- End -----`);
+    this.asgardLogger.log(`----- End -----`);
     return { content, chant, prefixTitle };
   }
 
   // create url message
   async createUrlMessage(url: string) {
-    const { log } = this.trackerLoggerCreator.create(`EVENT: createUrlMessage`);
-
-    log(`start to read url: ${url}`);
+    this.asgardLogger.log(`start to read url: ${url}`);
     const response = this.httpService.get<ArrayBuffer>(url, {
       responseType: 'arraybuffer',
     });

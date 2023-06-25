@@ -1,49 +1,26 @@
-import {
-  Inject,
-  Injectable,
-  OnApplicationBootstrap,
-  OnModuleDestroy,
-} from '@nestjs/common';
+import { Inject, Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import fs = require('fs');
-import {
-  TrackerLoggerCreator,
-  LoggerHelperService,
-} from '@asgard-hub/nest-winston';
-import {
-  Client,
-  Events,
-  GatewayIntentBits,
-  Message,
-  Partials,
-  TextChannel,
-  ActivityType,
-} from 'discord.js';
+import { AsgardLogger } from '@asgard-hub/nest-winston';
+import { Events, Message, TextChannel, ActivityType } from 'discord.js';
 
 import { DISCORD_BOT_MODULE_OPTIONS } from './constants/discord-bot.constants';
 import { DiscordBotModuleOptions } from './interface/discord-bot-module';
 import { validateYoutubeUrl } from './utils/validate-youtube-url';
-import { MessageService } from './services/message/message.service';
 import { DataSourceType } from './interface/data-source-type.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { DiscordClientService } from './services/discord-client/discord-client.service';
 import { lastValueFrom } from 'rxjs';
 
 @Injectable()
-export class DiscordBotService {
-  private readonly trackerLoggerCreator: TrackerLoggerCreator;
-
+export class DiscordBotService implements OnApplicationBootstrap {
   constructor(
-    loggerHelperService: LoggerHelperService,
+    private readonly asgardLogger: AsgardLogger,
     @Inject(DISCORD_BOT_MODULE_OPTIONS)
     private readonly options: DiscordBotModuleOptions,
     @Inject('BOT_SERVICE')
     private botClient: ClientProxy,
     private readonly discordClientService: DiscordClientService
-  ) {
-    this.trackerLoggerCreator = loggerHelperService.create(
-      DiscordBotService.name
-    );
-  }
+  ) {}
 
   async onApplicationBootstrap() {
     await this.botClient.connect();
@@ -52,29 +29,26 @@ export class DiscordBotService {
       return;
     }
 
-    const { log, error } = this.trackerLoggerCreator.create('EVENTS');
-
-    log('setup listener');
+    this.asgardLogger.log('setup listener');
     try {
-      this.discordClientService.discordClient.on(
+      this.discordClientService.dClient.on(
         Events.ClientReady,
         this.clientReadyListeners
       );
-      this.discordClientService.discordClient.on(
+      this.discordClientService.dClient.on(
         Events.MessageCreate,
         this.messageCreateListeners
       );
     } catch (e) {
-      error(e);
+      this.asgardLogger.error(e);
     }
   }
 
   private clientReadyListeners = async (): Promise<void> => {
-    const { log, error } = this.trackerLoggerCreator.create('EVENTS');
-    log(
+    this.asgardLogger.log(
       `${this.options.discordOptions.discordBotClientId} Discord Bot is ready!`
     );
-    this.discordClientService.discordClient.user.setActivity(
+    this.discordClientService.dClient.user.setActivity(
       this.options.config.runtime.isProd
         ? '🏮 有什麼想跟我說嗎？'
         : `🏮 我是基於開發版本 ${process.env.SERVER_VERSION}，請不要跟我說話`,
@@ -92,33 +66,33 @@ export class DiscordBotService {
   ): Promise<void> => {
     if (message.author.bot) return;
 
-    const { log, verbose, error } = this.trackerLoggerCreator.create('EVENTS');
-
     const isNotNeedToResponse = this.isNotNeedToResponse(message);
     if (isNotNeedToResponse) {
-      log('not prod and not develop channel, so no response');
+      this.asgardLogger.log('not prod and not develop channel, so no response');
       return;
     }
 
     const isDisableBotChannel = this.isDisableBotChannel(message);
     if (isDisableBotChannel) {
-      log('this channel is disable bot channel');
+      this.asgardLogger.log('this channel is disable bot channel');
       return;
     }
 
     const isNeedToResponse = this.isNeedToResponse(message);
-    verbose(`isUserCreateMessage: ${isNeedToResponse}`);
+    this.asgardLogger.verbose(`isUserCreateMessage: ${isNeedToResponse}`);
 
     // if message is a reply
-    log(`message is a reply: ${message?.reference ? true : false}`);
+    this.asgardLogger.log(
+      `message is a reply: ${message?.reference ? true : false}`
+    );
     if (await this.isReferenceAndNeedToResponse(message)) {
-      verbose('is a reply message');
+      this.asgardLogger.verbose('is a reply message');
       this.botClient.emit('chatbot:discord:chat', message);
       return;
     }
 
     if (!isNeedToResponse) {
-      log('not user create message, so no response');
+      this.asgardLogger.log('not user create message, so no response');
       return;
     }
 
@@ -130,7 +104,7 @@ export class DiscordBotService {
     //validate youtube url
     const isYtRequest = validateYoutubeUrl(messageContent);
     if (isYtRequest) {
-      log(`message is a youtube url: ${isYtRequest}`);
+      this.asgardLogger.log(`message is a youtube url: ${isYtRequest}`);
       if (
         !this.options.discordOptions?.alphaWhitelistedUserIds?.includes(
           message.author.id
@@ -193,7 +167,7 @@ export class DiscordBotService {
       );
 
       if (!this.isPermanentChannel(message)) {
-        log('not in permanent channel, so no response');
+        this.asgardLogger.log('not in permanent channel, so no response');
         return;
       }
 
@@ -201,7 +175,7 @@ export class DiscordBotService {
     }
 
     if (this.isEmptyMessage(message)) {
-      log('message is empty, so no response');
+      this.asgardLogger.log('message is empty, so no response');
       return;
     }
 
@@ -210,9 +184,6 @@ export class DiscordBotService {
   };
 
   private isNeedToResponse(message: Message<boolean>) {
-    const { log, verbose, error } =
-      this.trackerLoggerCreator.create('isNeedToResponse');
-
     const atBot = `<@${this.options.discordOptions.discordBotClientId}>`;
 
     const haveAttachment = message.attachments.size > 0;
@@ -221,8 +192,8 @@ export class DiscordBotService {
       message.content.startsWith(atBot) &&
       (message.content.replace(atBot, '').trim().length > 0 || haveAttachment);
 
-    verbose(`message.channelId: ${message.channelId}`);
-    verbose(`haveAtBotMessage: ${haveAtBotMessage}`);
+    this.asgardLogger.verbose(`message.channelId: ${message.channelId}`);
+    this.asgardLogger.verbose(`haveAtBotMessage: ${haveAtBotMessage}`);
 
     return (
       haveAtBotMessage ||
@@ -261,10 +232,6 @@ export class DiscordBotService {
   }
 
   private async isReferenceAndNeedToResponse(message: Message<boolean>) {
-    const { log, verbose, error } = this.trackerLoggerCreator.create(
-      'isReferenceAndNeedToResponse'
-    );
-
     // if not reference
     if (
       !message?.reference ||
@@ -282,7 +249,9 @@ export class DiscordBotService {
       !replyMessage?.author ||
       replyMessage.author.id !== this.options.discordOptions.discordBotClientId
     ) {
-      verbose('reply message is not bot message, so no response');
+      this.asgardLogger.verbose(
+        'reply message is not bot message, so no response'
+      );
       return false;
     }
 

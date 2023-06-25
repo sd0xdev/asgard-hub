@@ -20,5 +20,5 @@
       "@sd0x/nest-openai-client": ["libs/nest-openai-client/src/index.ts"]
     }
   },
-  "exclude": ["node_modules", "tmp"]
+  "exclude": ["node_modules", "tmp", "tools/cdk8s"]
 }

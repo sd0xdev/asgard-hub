@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MessageService } from './message.service';
 import { SetupKeywordService } from '../setup-keyword/setup-keyword.service';
-import { LoggerHelperService } from '@asgard-hub/nest-winston';
-import { MockLoggerHelperService } from '../../../__mocks__/logger-helper.service.spec';
+import { AsgardLogger } from '@asgard-hub/nest-winston';
+import { mockedLogger } from '../../../__mocks__/logger-helper.service.spec';
 import { DiscordClientService } from '../discord-client/discord-client.service';
 
 describe('MessageService', () => {
@@ -12,8 +12,8 @@ describe('MessageService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         {
-          provide: LoggerHelperService,
-          useClass: MockLoggerHelperService,
+          provide: AsgardLogger,
+          useClass: mockedLogger,
         },
         {
           provide: DiscordClientService,

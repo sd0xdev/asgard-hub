@@ -1,2 +1,2 @@
 export * from './lib/nest-winston.module';
-export * from './lib/logger-helper.service';
+export * from './lib/logger.service';

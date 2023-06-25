@@ -4,7 +4,7 @@ import {
   utilities as nestWinstonModuleUtilities,
   WinstonModule,
 } from 'nest-winston';
-import { LoggerHelperService } from './logger-helper.service';
+import { AsgardLogger } from './logger.service';
 import { NestWinstonOptionsSupplement } from '../interface/nest-winston-options.interface';
 import {
   NestWinstonModuleAsyncOptions,
@@ -18,8 +18,8 @@ import {
 
 @Module({
   imports: [],
-  providers: [LoggerHelperService],
-  exports: [LoggerHelperService],
+  providers: [AsgardLogger],
+  exports: [AsgardLogger],
 })
 export class NestWinstonModule {
   static async registerAsync(
@@ -64,7 +64,7 @@ export class NestWinstonModule {
         },
         {
           provide: NestWinstonOptionsSupplement.LOGGER_HELPER_SERVICE,
-          useClass: LoggerHelperService,
+          useClass: AsgardLogger,
         },
       ],
       exports: [

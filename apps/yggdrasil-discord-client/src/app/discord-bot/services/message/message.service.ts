@@ -1,9 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  OnApplicationBootstrap,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import {
   Message,
   MessagePayload,
@@ -15,10 +10,6 @@ import {
 import { List, Stack } from 'immutable';
 import { lastValueFrom } from 'rxjs';
 import {
-  LoggerHelperService,
-  TrackerLoggerCreator,
-} from '@asgard-hub/nest-winston';
-import {
   DISCORD_BOT_MODULE_OPTIONS,
   DiSCORD_SPLIT_MESSAGE_TARGET,
   GPT_3_5_CHAR_COUNT,
@@ -26,7 +17,7 @@ import {
 import { ChatCompletionRequestMessage, CreateCompletionResponse } from 'openai';
 import { DiscordBotModuleOptions } from '../../interface/discord-bot-module';
 import { SetupKeywordService } from '../setup-keyword/setup-keyword.service';
-import { ClientGrpc, ClientProxy } from '@nestjs/microservices';
+import { ClientGrpc } from '@nestjs/microservices';
 import { Metadata } from '@grpc/grpc-js';
 import { splitString } from '../../utils/split-string';
 import { delay } from '../../utils/delay';
@@ -35,24 +26,22 @@ import { DiscordClientService } from '../discord-client/discord-client.service';
 import { ChatGPTChant } from '../../interface/chatgpt-chant.enum';
 import { DataSourceType } from '../../interface/data-source-type.enum';
 import { CreateCompletionResponseUsageForRPC } from '../../interface/create.completion.response.usage.for.rpc.interface';
+import { AsgardLogger } from '@asgard-hub/nest-winston';
 
 @Injectable()
 export class MessageService implements OnModuleInit {
-  private readonly trackerLoggerCreator: TrackerLoggerCreator;
   private chatGPTService: ChatGPTService;
   private metadata = new Metadata();
 
   constructor(
-    loggerHelperService: LoggerHelperService,
+    private readonly asgardLogger: AsgardLogger,
     @Inject(DISCORD_BOT_MODULE_OPTIONS)
     private readonly options: DiscordBotModuleOptions,
     @Inject('CHATGPT_PACKAGE')
     private readonly grpcClient: ClientGrpc,
     private readonly keywordService: SetupKeywordService,
     private readonly discordClientService: DiscordClientService
-  ) {
-    this.trackerLoggerCreator = loggerHelperService.create(MessageService.name);
-  }
+  ) {}
 
   async onModuleInit() {
     this.chatGPTService =
@@ -63,8 +52,6 @@ export class MessageService implements OnModuleInit {
   }
 
   async createYoutubeResponse(message: Message<boolean>) {
-    const { log, error } = this.trackerLoggerCreator.create('EVENTS');
-
     // validate youtube url
     const messageContent = this.trimDiscordBotClientId(message);
 
@@ -72,7 +59,7 @@ export class MessageService implements OnModuleInit {
     const urls = messageContent.match(urlRegex);
     const url = urls[0];
 
-    log(`youtube url: ${url}`);
+    this.asgardLogger.log(`youtube url: ${url}`);
 
     let currentMessage = message;
     await this.sendMessageReply(
@@ -115,7 +102,7 @@ export class MessageService implements OnModuleInit {
         currentMessage = await this.sendMessageReply(content, currentMessage);
       }
     } catch (e) {
-      error(e);
+      this.asgardLogger.error(e);
       await this.sendMessageReply(
         '相關核心依賴發生錯誤，可能需要檢查 🎏',
         currentMessage
@@ -127,8 +114,6 @@ export class MessageService implements OnModuleInit {
     message: Message<boolean>,
     dataSourceType: DataSourceType
   ) {
-    const { log, error } = this.trackerLoggerCreator.create('EVENTS');
-
     // validate url
     const urlContent = this.trimDiscordBotClientId(message).replace('url', '');
 
@@ -153,7 +138,7 @@ export class MessageService implements OnModuleInit {
 
     const url = urls[0];
 
-    log(`url: ${url}`);
+    this.asgardLogger.log(`url: ${url}`);
 
     let currentMessage = message;
     await this.sendMessageReply(
@@ -200,7 +185,7 @@ export class MessageService implements OnModuleInit {
         currentMessage = await this.sendMessageReply(content, currentMessage);
       }
     } catch (e) {
-      error(e);
+      this.asgardLogger.error(e);
       await this.sendMessageReply(
         '相關核心依賴發生錯誤，可能需要檢查 🎏',
         currentMessage
@@ -212,8 +197,6 @@ export class MessageService implements OnModuleInit {
     message: Message<boolean>,
     dataSourceType: DataSourceType
   ) {
-    const { log, error } = this.trackerLoggerCreator.create('EVENTS');
-
     // validate youtube url
     const docURL = message.attachments.first()?.url;
     const userMessageContent = this.trimDiscordBotClientId(message).replace(
@@ -242,7 +225,7 @@ export class MessageService implements OnModuleInit {
 
     const url = urls[0];
 
-    log(`docs url: ${url}`);
+    this.asgardLogger.log(`docs url: ${url}`);
 
     let currentMessage = message;
     await this.sendMessageReply(
@@ -292,7 +275,7 @@ export class MessageService implements OnModuleInit {
         currentMessage = await this.sendMessageReply(content, currentMessage);
       }
     } catch (e) {
-      error(e);
+      this.asgardLogger.error(e);
       await this.sendMessageReply(
         '相關核心依賴發生錯誤，可能需要檢查 🎏',
         currentMessage
@@ -301,10 +284,6 @@ export class MessageService implements OnModuleInit {
   }
 
   async createResponse(message: Message<boolean>) {
-    const { log, error } = this.trackerLoggerCreator.create(
-      `EVENT: createResponse`
-    );
-
     message = await this.getRefreshedMessage(message);
 
     try {
@@ -319,24 +298,26 @@ export class MessageService implements OnModuleInit {
         messageStack = await this.setupOggSpeech(messageStack);
       }
 
-      log(`setting up request...`);
+      this.asgardLogger.log(`setting up request...`);
       const request = await this.setupGeneralHistoryMessages(messageStack);
-      request.forEach((r) => log(`${r.role}, ${r.name}: ${r.content}`));
-      log(`setting up response...`);
+      request.forEach((r) =>
+        this.asgardLogger.log(`${r.role}, ${r.name}: ${r.content}`)
+      );
+      this.asgardLogger.log(`setting up response...`);
 
       const result = await this.responseUser(request, message.author.id);
       const response = result.response;
 
-      log(`successfully get response`);
+      this.asgardLogger.log(`successfully get response`);
 
-      log(`prepare to send message...`);
+      this.asgardLogger.log(`prepare to send message...`);
       await (message.channel as TextChannel).sendTyping();
 
       await this.sendMessageReply(response, message, result.tokens);
-      log(`successfully send message: ${response}`);
-      log(`successfully send message`);
+      this.asgardLogger.log(`successfully send message: ${response}`);
+      this.asgardLogger.log(`successfully send message`);
     } catch (e) {
-      error(e);
+      this.asgardLogger.error(e);
       await this.sendMessageReply(
         `很遺憾，目前暫時無法服務您。請稍後再試， Message: ${e?.message}`,
         message
@@ -345,7 +326,7 @@ export class MessageService implements OnModuleInit {
   }
 
   private async getRefreshedMessage(message: Message<boolean>) {
-    const client = this.discordClientService.discordClient;
+    const client = this.discordClientService.dClient;
     const refreshedChannel: TextChannel = (await client.channels.fetch(
       message.channelId,
       {
@@ -367,10 +348,6 @@ export class MessageService implements OnModuleInit {
   }
 
   async createAudioTranscriptionResponse(message: Message<boolean>) {
-    const { log, error } = this.trackerLoggerCreator.create(
-      `EVENT: createAudioTranscriptionResponse`
-    );
-
     try {
       // show typing
       await (message.channel as TextChannel).sendTyping();
@@ -382,7 +359,7 @@ export class MessageService implements OnModuleInit {
         return;
       }
 
-      log(`setting up request...`);
+      this.asgardLogger.log(`setting up request...`);
       const response = await lastValueFrom(
         this.chatGPTService.fetchAudioTranscription(
           {
@@ -392,18 +369,18 @@ export class MessageService implements OnModuleInit {
           this.metadata
         )
       );
-      log(`setting up response...`);
+      this.asgardLogger.log(`setting up response...`);
       let currentMessage = message;
       for (const r of response.responses) {
         currentMessage = await this.sendMessageReply(r.text, message);
         // show typing
         await (message.channel as TextChannel).sendTyping();
       }
-      log(`successfully get response`);
+      this.asgardLogger.log(`successfully get response`);
 
       return currentMessage;
     } catch (e) {
-      error(e);
+      this.asgardLogger.error(e);
       await this.sendMessageReply(
         `很遺憾，目前暫時無法服務您。請稍後再試， Message: ${e?.message}`,
         message
@@ -490,10 +467,6 @@ export class MessageService implements OnModuleInit {
 
   // setup history messages
   async setupGeneralHistoryMessages(messageStack: Stack<Message<boolean>>) {
-    const { log } = this.trackerLoggerCreator.create(
-      `EVENT: setupGeneralHistoryMessages`
-    );
-
     let conversation: ChatCompletionRequestMessage[] = [];
     const totalSize = messageStack.size;
     let conversationChant = undefined;
@@ -549,7 +522,7 @@ export class MessageService implements OnModuleInit {
         }
 
         if (!messages) {
-          log(`no prefix message, skip this message...`);
+          this.asgardLogger.log(`no prefix message, skip this message...`);
           messageStack = messageStack.pop();
           continue;
         }
@@ -570,7 +543,7 @@ export class MessageService implements OnModuleInit {
           GPT_3_5_CHAR_COUNT &&
         messageStack.size > 1
       ) {
-        log(`message is too long, skip this message...`);
+        this.asgardLogger.log(`message is too long, skip this message...`);
         messageStack = messageStack.pop();
         continue;
       }
@@ -611,10 +584,6 @@ export class MessageService implements OnModuleInit {
     tokens = 0,
     isCode = false
   ) {
-    const { log, error } = this.trackerLoggerCreator.create(
-      'EVENTS: sendMessageReply'
-    );
-
     let messageQueue = this.setupMessageQueue(
       response,
       DiSCORD_SPLIT_MESSAGE_TARGET
@@ -622,10 +591,10 @@ export class MessageService implements OnModuleInit {
 
     let currentMessage: Message<boolean> = message;
 
-    log(`start to send ${messageQueue.size} messages...`);
+    this.asgardLogger.log(`start to send ${messageQueue.size} messages...`);
     while (messageQueue.size > 0) {
       try {
-        log(`total message queue: ${messageQueue.size}`);
+        this.asgardLogger.log(`total message queue: ${messageQueue.size}`);
         const content = messageQueue.first();
         if (!content) continue;
         messageQueue = messageQueue.shift();
@@ -650,7 +619,7 @@ export class MessageService implements OnModuleInit {
         // delay 256ms, to avoid rate limit
         await delay(256);
       } catch (e) {
-        error(e);
+        this.asgardLogger.error(e);
         await currentMessage.reply({
           content: `System error, please try again later.  ${e.message}`,
         });
@@ -659,7 +628,7 @@ export class MessageService implements OnModuleInit {
       }
     }
 
-    log(`successfully send message...`);
+    this.asgardLogger.log(`successfully send message...`);
     return currentMessage;
   }
 
@@ -669,9 +638,6 @@ export class MessageService implements OnModuleInit {
 
   // respond user from chatgpt
   async responseUser(contents: ChatCompletionRequestMessage[], user: string) {
-    const { log, error } = this.trackerLoggerCreator.create(
-      'EVENT: responseUser'
-    );
     try {
       let retryCount = 0;
       let shouldRetry = true;
@@ -696,7 +662,7 @@ export class MessageService implements OnModuleInit {
             shouldRetry = true;
           }
           shouldRetry = false;
-          error(e);
+          this.asgardLogger.error(e);
           throw new Error(`System Error: ${e.message} ${e.response?.data}`);
         }
         retryCount += 1;
@@ -704,9 +670,11 @@ export class MessageService implements OnModuleInit {
 
       const usage: CreateCompletionResponseUsageForRPC = result?.usage;
 
-      log(`use completion tokens: ${usage?.completionTokens}`);
-      log(`use prompt tokens: ${usage?.promptTokens}`);
-      log(`use tokens: ${usage?.totalTokens}`);
+      this.asgardLogger.log(
+        `use completion tokens: ${usage?.completionTokens}`
+      );
+      this.asgardLogger.log(`use prompt tokens: ${usage?.promptTokens}`);
+      this.asgardLogger.log(`use tokens: ${usage?.totalTokens}`);
 
       return {
         response: result?.choices[0]?.message?.content,
@@ -714,8 +682,8 @@ export class MessageService implements OnModuleInit {
       };
     } catch (e) {
       const eResponse = e.response?.data;
-      error(eResponse);
-      error(e, 'responseUser', e.message);
+      this.asgardLogger.error(eResponse);
+      this.asgardLogger.error(e, 'responseUser', e.message);
       return {
         response: `Sorry, System Error. Please try again later. ${
           eResponse?.error?.message ?? e.message
@@ -741,12 +709,8 @@ export class MessageService implements OnModuleInit {
 
   // response user from completions
   private async responseUserFromCompletions(prompt: string) {
-    const { log, error } = this.trackerLoggerCreator.create(
-      'EVENT: responseUserFromCompletions'
-    );
-
-    log(`prompt code...`);
-    log(prompt);
+    this.asgardLogger.log(`prompt code...`);
+    this.asgardLogger.log(prompt);
 
     try {
       const result: CreateCompletionResponse | any = await lastValueFrom(
@@ -761,9 +725,11 @@ export class MessageService implements OnModuleInit {
 
       const usage: CreateCompletionResponseUsageForRPC = result?.usage;
 
-      log(`use completion tokens: ${usage?.completionTokens}`);
-      log(`use prompt tokens: ${usage?.promptTokens}`);
-      log(`use tokens: ${usage?.totalTokens}`);
+      this.asgardLogger.log(
+        `use completion tokens: ${usage?.completionTokens}`
+      );
+      this.asgardLogger.log(`use prompt tokens: ${usage?.promptTokens}`);
+      this.asgardLogger.log(`use tokens: ${usage?.totalTokens}`);
 
       return {
         response: result?.choices[0]?.text,
@@ -771,8 +737,8 @@ export class MessageService implements OnModuleInit {
       };
     } catch (e) {
       const eResponse = e.response?.data;
-      error(eResponse);
-      error(e, 'responseUserFromCompletions', e.message);
+      this.asgardLogger.error(eResponse);
+      this.asgardLogger.error(e, 'responseUserFromCompletions', e.message);
       return {
         response: `Sorry, System Error. Please try again later. ${
           eResponse?.error?.message ?? e.message
@@ -789,9 +755,7 @@ export class MessageService implements OnModuleInit {
   }
 
   private async setupOggSpeech(messageStack: Stack<Message<boolean>>) {
-    const { log, error } = this.trackerLoggerCreator.create('EVENT: setupOgg');
-
-    log(`start to setup ogg...`);
+    this.asgardLogger.log(`start to setup ogg...`);
     for (const message of messageStack) {
       try {
         const url = message.attachments.first()?.url;
@@ -810,11 +774,11 @@ export class MessageService implements OnModuleInit {
         const content = response.responses.map((r) => r.text).join('\n');
         message.content = content;
       } catch (e) {
-        error(e);
+        this.asgardLogger.error(e);
       }
     }
 
-    log(`successfully setup ogg...`);
+    this.asgardLogger.log(`successfully setup ogg...`);
     return messageStack;
   }
 }

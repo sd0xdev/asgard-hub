@@ -1,0 +1,144 @@
+stages:
+  - build-image
+  - cloud-deploy
+
+variables:
+  LANG: "en_US.UTF-8"
+  LC_ALL: "en_US.UTF-8"
+  GIT_DEPTH: 0
+  GIT_SUBMODULE_STRATEGY: normal
+  # Use TLS https://docs.gitlab.com/ee/ci/docker/using_docker_build.html#tls-enabled
+  DOCKER_HOST: tcp://docker:2376
+  DOCKER_TLS_CERTDIR: "/certs"
+  # These are usually specified by the entrypoint, however the
+  # Kubernetes executor doesn't run entrypoints
+  # https://gitlab.com/gitlab-org/gitlab-runner/-/issues/4125
+  DOCKER_TLS_VERIFY: 1
+  DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  DOCKER_DRIVER: overlay2
+
+build-and-push: &build-and-push
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  tags:
+    - self-docker
+  stage: build-image
+  needs: []
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"$(printf "%s:%s" "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+    - chmod +x ./tools/shell-script/package.sh
+    - sh ./tools/shell-script/package.sh
+  rules:
+    - when: never
+  retry:
+    max: 2
+    when:
+      - stuck_or_timeout_failure
+      - runner_system_failure
+
+build-and-push:staging:
+  <<: *build-and-push
+  stage: build-image
+  needs: []
+  variables:
+    PROJECT_NAME: yggdrasil-core-engine
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+  retry:
+    max: 2
+    when:
+      - stuck_or_timeout_failure
+      - runner_system_failure
+
+build-and-push-discord-client:staging:
+  <<: *build-and-push
+  stage: build-image
+  needs: []
+  variables:
+    PROJECT_NAME: yggdrasil-discord-client
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+  retry:
+    max: 2
+    when:
+      - stuck_or_timeout_failure
+      - runner_system_failure
+
+cloud-deploy: &cloud-deploy
+  image: alpine:3.14
+  stage: cloud-deploy
+  tags:
+    - self-docker
+  before_script:
+    - apk update  && apk add --no-cache curl nodejs npm
+    - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+    - chmod +x ./kubectl && mv ./kubectl /usr/local/bin/kubectl
+    - mkdir -p $HOME/.kube
+    - echo -n $KUBE_CONFIG | base64 -d > $HOME/.kube/config
+    - kubectl config view
+  script:
+    - echo $NODE_ENV
+    - echo $KUBE_NAME_SPACE
+    - echo $PROJECT_NAME
+    - kubectl delete jobs --all -n $KUBE_NAME_SPACE
+    - kubectl delete cronjobs --all -n $KUBE_NAME_SPACE
+    - chmod +x ./tools/shell-script/build-cdk8s.sh
+    - sh ./tools/shell-script/build-cdk8s.sh
+    - kubectl create secret docker-registry gitlab-registry --docker-server="$CI_REGISTRY" --docker-username="$CI_DEPLOY_USER" --docker-password="$CI_DEPLOY_PASSWORD" --docker-email="$GITLAB_USER_EMAIL" -n $KUBE_NAME_SPACE -o yaml --dry-run=client | kubectl apply -f -
+    - kubectl apply -f ./tools/cdk8s/${PROJECT_NAME}/dist/*.yaml -n $KUBE_NAME_SPACE
+  rules:
+    - when: never
+  artifacts:
+    name: "${PROJECT_NAME}-$CI_JOB_NAME-$CI_COMMIT_REF_NAME"
+    paths:
+      - ./tools/cdk8s/${PROJECT_NAME}/dist/*
+    expire_in: 3 days
+  retry:
+    max: 2
+    when:
+      - stuck_or_timeout_failure
+      - runner_system_failure
+
+cloud-deploy:staging:
+  <<: *cloud-deploy
+  stage: cloud-deploy
+  needs: [
+    'build-and-push:staging'
+  ]
+  variables:
+    NODE_ENV: staging
+    KUBE_NAME_SPACE: yggdrasil-core-engine-staging
+    PROJECT_NAME: yggdrasil-core-engine
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+  environment:
+    name: staging
+    action: prepare
+  retry:
+    max: 2
+    when:
+      - stuck_or_timeout_failure
+      - runner_system_failure
+
+cloud-deploy-discord-client:staging:
+  <<: *cloud-deploy
+  stage: cloud-deploy
+  needs: [
+    'build-and-push-discord-client:staging'
+  ]
+  variables:
+    NODE_ENV: staging
+    KUBE_NAME_SPACE: yggdrasil-discord-client-staging
+    PROJECT_NAME: yggdrasil-discord-client
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+  environment:
+    name: staging
+    action: prepare
+  retry:
+    max: 2
+    when:
+      - stuck_or_timeout_failure
+      - runner_system_failure
