@@ -1,0 +1,19 @@
+## Create Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: yggdrasil-discord-client-staging
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: gitlab-ci-app-rolebinding
+  namespace: yggdrasil-discord-client-staging
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- namespace: gitlab-ci
+  kind: ServiceAccount
+  name: default

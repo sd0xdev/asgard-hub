@@ -1,27 +1,19 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { Client, Events, GatewayIntentBits, Partials } from 'discord.js';
-import {
-  LoggerHelperService,
-  TrackerLoggerCreator,
-} from '@asgard-hub/nest-winston';
+import { AsgardLogger } from '@asgard-hub/nest-winston';
 import { DISCORD_BOT_MODULE_OPTIONS } from '../../constants/discord-bot.constants';
 import { DiscordBotModuleOptions } from '../../interface/discord-bot-module';
 
 @Injectable()
-export class DiscordClientService {
-  private readonly trackerLoggerCreator: TrackerLoggerCreator;
+export class DiscordClientService implements OnApplicationShutdown {
   private client: Client;
   private token: string;
 
   constructor(
-    loggerHelperService: LoggerHelperService,
+    private readonly asgardLogger: AsgardLogger,
     @Inject(DISCORD_BOT_MODULE_OPTIONS)
     private readonly options: DiscordBotModuleOptions
-  ) {
-    this.trackerLoggerCreator = loggerHelperService.create(
-      DiscordClientService.name
-    );
-  }
+  ) {}
 
   private async setupClient() {
     this.client = new Client({
@@ -45,15 +37,16 @@ export class DiscordClientService {
     await this.client.login(this.token);
   }
 
-  get discordClient(): Client {
+  get dClient(): Client {
     if (!this.client) {
+      this.asgardLogger.log('setup client');
       this.setupClient();
     }
 
     return this.client;
   }
 
-  onModuleDestroy() {
+  onApplicationShutdown() {
     this.client.removeAllListeners();
     this.client.destroy();
     this.client = null;

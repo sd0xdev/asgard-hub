@@ -125,9 +125,9 @@ export function setupRequestMessage(
       return new DiscordExpertChant(chant);
     case ChatGPTChant.dddExpert:
       return new DddExpertChant(chant);
-    case ChatGPTChant.youtubeSunmmary:
+    case ChatGPTChant.youtubeSummary:
       return new YoutubeSummaryChant(chant);
-    case ChatGPTChant.pdfSunmmary:
+    case ChatGPTChant.pdfSummary:
       return new PDFSummaryChant(chant);
     case ChatGPTChant.txtSunmmary:
       return new TXTSummaryChant(chant);

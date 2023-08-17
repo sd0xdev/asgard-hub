@@ -10,7 +10,7 @@ import {
 } from '../../interface/create.completion.response.usage.for.rpc.interface';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { YoutubeRecordService } from '../../../services/youtube-record/youtube-record.service';
-import { LoggerHelperService } from '@asgard-hub/nest-winston';
+import { AsgardLogger } from '@asgard-hub/nest-winston';
 import { BaseFeatureChatGPTService } from '../base-feature-chat-gpt.service';
 import { delay } from '@asgard-hub/utils';
 import { DataSourceAdapterService } from '../../../data-source-adapter/data-source-adapter.service';
@@ -22,14 +22,13 @@ import { DownloadAudioEvent } from '../../../services/youtube-dl/youtube-dl.serv
 @Injectable()
 export class YTChatGPTService extends BaseFeatureChatGPTService<YoutubeAdapter> {
   constructor(
-    loggerHelperService: LoggerHelperService,
+    private readonly asgardLogger: AsgardLogger,
     protected readonly chatGPTService: ChatGPTGateWayService,
     protected readonly dataSourceAdapterService: DataSourceAdapterService,
     protected eventEmitter: EventEmitter2,
     protected readonly youtubeRecordService: YoutubeRecordService
   ) {
     super(
-      loggerHelperService,
       dataSourceAdapterService,
       DataSourceType.YOUTUBE,
       YTChatGPTService.name
@@ -39,10 +38,7 @@ export class YTChatGPTService extends BaseFeatureChatGPTService<YoutubeAdapter> 
   async fetchSummaryWithGPT(
     data: YTSummaryOptions
   ): Promise<PartCreateChatCompletionResponse[]> {
-    const { log, error } = this.trackerLoggerCreator.create(
-      'fetchYoutubeSummaryWithGPT'
-    );
-    log(`called ${data.url}`);
+    this.asgardLogger.log(`called ${data.url}`);
 
     const { url, user } = data;
 
@@ -52,11 +48,11 @@ export class YTChatGPTService extends BaseFeatureChatGPTService<YoutubeAdapter> 
     // find record by url
     const record = await this.youtubeRecordService.findRecordByYtId(id);
 
-    data.isForced && log('isForced is true');
+    data.isForced && this.asgardLogger.log('isForced is true');
 
     if (record && !data.isForced) {
       // if record exists, return the record
-      log('record exists, return the record');
+      this.asgardLogger.log('record exists, return the record');
       return record.response;
     }
 
@@ -64,13 +60,13 @@ export class YTChatGPTService extends BaseFeatureChatGPTService<YoutubeAdapter> 
     let transcriptions: PartCreateTranscriptionResponse[];
 
     try {
-      log('audio download start...');
+      this.asgardLogger.log('audio download start...');
       // call youtube-dl service to download audio
       const { audioFilePath, title, channel, metaData } =
         await this.getAdapter().getDataFormUrlSaveAsPath<DownloadAudioEvent>(
           url
         );
-      log('audio download end...');
+      this.asgardLogger.log('audio download end...');
 
       // need to split audio file to 180 seconds
       const paths = await splitAudioFile(audioFilePath, 180);
@@ -84,7 +80,7 @@ export class YTChatGPTService extends BaseFeatureChatGPTService<YoutubeAdapter> 
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             }) + '%';
-          log(`percentage: ${formatted}`);
+          this.asgardLogger.log(`percentage: ${formatted}`);
           await delay(Math.random() * 500 + 256);
         })
         .process(async (path, index, pool) => {
@@ -105,7 +101,9 @@ export class YTChatGPTService extends BaseFeatureChatGPTService<YoutubeAdapter> 
         });
 
       promisePool.errors?.length > 0 &&
-        promisePool.errors.forEach((e) => error(e.raw, e.stack, e));
+        promisePool.errors.forEach((e) =>
+          this.asgardLogger.error(e.raw, e.stack, e)
+        );
       const results = promisePool.results.filter(
         (r) => r !== undefined && (r as any) !== Symbol.for('failed')
       );
@@ -147,7 +145,7 @@ export class YTChatGPTService extends BaseFeatureChatGPTService<YoutubeAdapter> 
         channelId: metaData.channelId,
       });
     } catch (e) {
-      error(e?.message, e.stack, e);
+      this.asgardLogger.error(e?.message, e.stack, e);
     }
 
     return summaries;
@@ -166,20 +164,16 @@ export class YTChatGPTService extends BaseFeatureChatGPTService<YoutubeAdapter> 
     summary: PartCreateChatCompletionResponse;
     transcription: PartCreateTranscriptionResponse;
   }> {
-    const { log } = this.trackerLoggerCreator.create(
-      `getYoutubeSummary: Title: ${info.title}, Part: ${info.partNumber}`
-    );
-
-    log('transcription start...');
+    this.asgardLogger.log('transcription start...');
     const transcription =
       await this.getAdapter().getDataFromPath<CreateTranscriptionResponse>(
         audioFilePath
       );
-    log('transcription end...');
+    this.asgardLogger.log('transcription end...');
 
     // call chatgpt service to general messages
     const generalMessages = this.chatGPTService.generalMessages(
-      ChatGPTChant.youtubeSunmmary
+      ChatGPTChant.youtubeSummary
     );
 
     generalMessages.push({
@@ -191,7 +185,7 @@ export class YTChatGPTService extends BaseFeatureChatGPTService<YoutubeAdapter> 
       role: 'user',
     });
 
-    log('get summary start...');
+    this.asgardLogger.log('get summary start...');
     // call chatgpt service to get summary
     const summary = await this.chatGPTService.getGPTResponse(
       generalMessages,
@@ -201,7 +195,7 @@ export class YTChatGPTService extends BaseFeatureChatGPTService<YoutubeAdapter> 
         temperature: this.temperature,
       }
     );
-    log('get summary end...');
+    this.asgardLogger.log('get summary end...');
 
     return {
       summary: {

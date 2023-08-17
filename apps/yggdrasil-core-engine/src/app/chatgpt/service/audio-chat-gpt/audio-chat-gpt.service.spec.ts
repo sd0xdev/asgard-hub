@@ -3,8 +3,8 @@ import { AudioChatGPTService } from './audio-chat-gpt.service';
 import { DataSourceAdapterService } from '../../../data-source-adapter/data-source-adapter.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { YAudioTranscriptionService } from '../../../services/y-audio-transcription/youtube-record.service';
-import { LoggerHelperService } from '@asgard-hub/nest-winston';
-import { MockLoggerHelperService } from '../../../__mocks__/logger-helper.service.spec';
+import { AsgardLogger } from '@asgard-hub/nest-winston';
+import { mockedLogger } from '../../../__mocks__/logger-helper.service.spec';
 describe('AudioChatGptService', () => {
   let service: AudioChatGPTService;
 
@@ -12,8 +12,8 @@ describe('AudioChatGptService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         {
-          provide: LoggerHelperService,
-          useClass: MockLoggerHelperService,
+          provide: AsgardLogger,
+          useClass: mockedLogger,
         },
         {
           provide: DataSourceAdapterService,

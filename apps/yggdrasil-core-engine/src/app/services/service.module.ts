@@ -5,9 +5,7 @@ import { YoutubeDlService } from './youtube-dl/youtube-dl.service';
 import { MongoModule } from '../mongo/mongo.module';
 import { YoutubeRecordService } from './youtube-record/youtube-record.service';
 import { YoutubeDataService } from './youtube-data/youtube-data.service';
-import { CloudStorageService } from './cloud-storage/cloud-storage.service';
 import { YAudioTranscriptionService } from './y-audio-transcription/youtube-record.service';
-import { CloudErrorReportingService } from './cloud-error-reporting/cloud-error-reporting.service';
 import { ChatGPTGateWayService } from './chatgpt-gateway-service/chatgpt.service';
 import { ConfigService } from '@nestjs/config';
 import { NestWinstonModule } from '@asgard-hub/nest-winston';
@@ -61,8 +59,6 @@ import { IOpenAIConfig } from '../config/open.ai.config';
     YoutubeRecordService,
     YoutubeDataService,
     YAudioTranscriptionService,
-    CloudStorageService,
-    CloudErrorReportingService,
   ],
   exports: [
     ChatGPTGateWayService,

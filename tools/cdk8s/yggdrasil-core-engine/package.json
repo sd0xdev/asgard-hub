@@ -1,0 +1,33 @@
+{
+  "name": "yggdrasil-core-engine",
+  "version": "1.0.0",
+  "main": "main.js",
+  "types": "main.ts",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "import": "cdk8s import",
+    "synth": "cdk8s synth",
+    "compile": "tsc --build",
+    "watch": "tsc --build -w",
+    "test": "jest",
+    "build": "npm run compile && npm run test -- -u && npm run synth",
+    "upgrade": "npm i cdk8s@latest cdk8s-cli@latest",
+    "upgrade:next": "npm i cdk8s@next cdk8s-cli@next"
+  },
+  "dependencies": {
+    "cdk8s": "^2.7.83",
+    "cdk8s-plus-25": "^2.8.49",
+    "constructs": "^10.2.58",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^26.0.24",
+    "@types/node": "^14.18.51",
+    "cdk8s-cli": "^2.2.73",
+    "jest": "^26.6.3",
+    "ts-jest": "^26.5.6",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.5"
+  }
+}

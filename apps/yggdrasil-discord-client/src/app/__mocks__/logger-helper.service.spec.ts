@@ -3,17 +3,6 @@ import { LoggerService } from '@nestjs/common';
 export function mockClearAll() {
   // Reset mockedLogger
   Object.values(innerMockedLogger).forEach((m) => m.mockClear());
-
-  // Reset LoggerHelperService
-  mockedLoggerHelperServiceMakeCreator.mockClear();
-  MockLoggerHelperService.mockClear();
-
-  // Reset TrackerLoggerCreator
-  mockedTrackerLoggerCreatorCreate.mockClear();
-  TrackerLoggerCreator.mockClear();
-
-  // Reset TrackerLogger
-  TrackerLogger.mockClear();
 }
 
 // Default mocked Logger
@@ -25,76 +14,13 @@ const innerMockedLogger = {
   verbose: jest.fn(),
 };
 
-export const mockedLogger: LoggerService = innerMockedLogger;
-
-// class LoggerHelperService
-export const mockedLoggerHelperServiceMakeCreator = jest.fn(function (
-  name: string
-) {
-  return new TrackerLoggerCreator(mockedLogger, name);
-});
-
-export const MockLoggerHelperService = jest.fn().mockImplementation(() => {
-  return {
-    create: mockedLoggerHelperServiceMakeCreator,
-  };
-});
-
-// class TrackerLoggerCreator
-export const mockedTrackerLoggerCreatorCreate = jest.fn(function (
-  trackingId: string
-) {
-  return new TrackerLogger(this.loggerService, this.name, trackingId);
-});
-
-export const TrackerLoggerCreator = jest
-  .fn()
-  .mockImplementation((logger: LoggerService, name: string) => {
-    return {
-      name,
-      loggerService: logger,
-      create: mockedTrackerLoggerCreatorCreate,
-    };
-  });
-
-// class TrackerLogger
-export const TrackerLogger = jest
-  .fn()
-  .mockImplementation(
-    (loggerService: LoggerService, name: string, _trackingId: string) => {
-      function createMessage(message: any) {
-        return {
-          trackingId: _trackingId,
-          message: `${name}: ${message}`,
-        };
-      }
-
-      const mocked = {
-        name,
-        loggerService,
-        _trackingId,
-        createMessage,
-        log: (message: any, context?: string) =>
-          loggerService.log(createMessage(message), context),
-        error: (message: any, context?: string) =>
-          loggerService.error(createMessage(message), context),
-        warn: (message: any, context?: string) =>
-          loggerService.warn(createMessage(message), context),
-        debug: (message: any, context?: string) =>
-          loggerService.debug(createMessage(message), context),
-        verbose: (message: any, context?: string) =>
-          loggerService.verbose(createMessage(message), context),
-      };
-
-      Object.defineProperty(mocked, 'trackingId', {
-        get: function () {
-          return this._trackingId;
-        },
-      });
-
-      return mocked;
-    }
-  );
+export class mockedLogger implements LoggerService {
+  log = innerMockedLogger.log;
+  error = innerMockedLogger.error;
+  warn = innerMockedLogger.warn;
+  debug = innerMockedLogger.debug;
+  verbose = innerMockedLogger.verbose;
+}
 
 it('should be defined', () => {
   expect(mockedLogger).toBeDefined();

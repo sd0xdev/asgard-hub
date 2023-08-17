@@ -1,11 +1,11 @@
 import { Test } from '@nestjs/testing';
 
-import { LoggerHelperService } from './logger-helper.service';
+import { AsgardLogger } from './logger.service';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { NEST_WINSTON_MODULE_OPTIONS } from '../constants/nest-winston.constants';
 
 describe('LoggerHelperService', () => {
-  let service: LoggerHelperService;
+  let service: AsgardLogger;
 
   beforeAll(async () => {
     const app = await Test.createTestingModule({
@@ -24,62 +24,56 @@ describe('LoggerHelperService', () => {
           provide: NEST_WINSTON_MODULE_OPTIONS,
           useValue: jest.fn(),
         },
-        LoggerHelperService,
+        AsgardLogger,
       ],
     }).compile();
 
-    service = app.get<LoggerHelperService>(LoggerHelperService);
+    service = app.get<AsgardLogger>(AsgardLogger);
   });
 
   describe('create', () => {
     it('should return TrackerLoggerCreator', () => {
-      expect(service.create()).toBeInstanceOf(Object);
+      expect(service).toBeInstanceOf(Object);
     });
 
     it('should return TrackerLoggerCreator with name', () => {
-      expect(service.create('test')).toBeInstanceOf(Object);
+      expect(service).toBeInstanceOf(Object);
     });
   });
 
   describe('TrackerLoggerCreator', () => {
     it('should return TrackerLogger', () => {
-      expect(service.create().create('test')).toBeInstanceOf(Object);
-    });
-  });
-
-  describe('TrackerLogger', () => {
-    it('should return trackingId', () => {
-      expect(service.create().create('test').trackingId).toBe('test');
+      expect(service).toBeInstanceOf(Object);
     });
   });
 
   describe('log', () => {
     it('should return void', () => {
-      expect(service.create().create('test').log('test')).toBeUndefined();
+      expect(service.log('test')).toBeUndefined();
     });
   });
 
   describe('error', () => {
     it('should return void', () => {
-      expect(service.create().create('test').error('test')).toBeUndefined();
+      expect(service.error('test')).toBeUndefined();
     });
   });
 
   describe('warn', () => {
     it('should return void', () => {
-      expect(service.create().create('test').warn('test')).toBeUndefined();
+      expect(service.warn('test')).toBeUndefined();
     });
   });
 
   describe('debug', () => {
     it('should return void', () => {
-      expect(service.create().create('test').debug?.('test')).toBeUndefined();
+      expect(service.debug?.('test')).toBeUndefined();
     });
   });
 
   describe('verbose', () => {
     it('should return void', () => {
-      expect(service.create().create('test').verbose?.('test')).toBeUndefined();
+      expect(service.verbose?.('test')).toBeUndefined();
     });
   });
 });

@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SetupKeywordService } from './setup-keyword.service';
-import { LoggerHelperService } from '@asgard-hub/nest-winston';
-import { MockLoggerHelperService } from '../../../__mocks__/logger-helper.service.spec';
+import { AsgardLogger } from '@asgard-hub/nest-winston';
+import { mockedLogger } from '../../../__mocks__/logger-helper.service.spec';
 import { DISCORD_BOT_MODULE_OPTIONS } from '../../constants/discord-bot.constants';
 import { HttpService } from '@nestjs/axios';
 describe('SetupKeywordService', () => {
@@ -11,8 +11,8 @@ describe('SetupKeywordService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         {
-          provide: LoggerHelperService,
-          useClass: MockLoggerHelperService,
+          provide: AsgardLogger,
+          useClass: mockedLogger,
         },
         {
           provide: 'CHATGPT_PACKAGE',

@@ -3,7 +3,6 @@ import { ChatGPTChant } from '@asgard-hub/utils';
 import {
   ChatCompletionRequestMessage,
   CreateChatCompletionResponse,
-  OpenAIApi,
 } from 'openai';
 import { CreateCompletionResponseUsageForRPC } from '../../chatgpt/interface/create.completion.response.usage.for.rpc.interface';
 import { createReadStream } from 'fs';
@@ -11,32 +10,23 @@ import { setupRequestMessage } from '@asgard-hub/utils';
 import { Observable } from 'rxjs';
 import { IncomingMessage } from 'node:http';
 import { ConfigService } from '@nestjs/config';
-import {
-  LoggerHelperService,
-  TrackerLoggerCreator,
-} from '@asgard-hub/nest-winston';
 import { NestOpenAIClientService } from '@sd0x/nest-openai-client';
+import { AsgardLogger } from '@asgard-hub/nest-winston';
 
 @Injectable()
 export class ChatGPTGateWayService {
-  protected trackerLoggerCreator: TrackerLoggerCreator;
-
   constructor(
-    loggerHelperService: LoggerHelperService,
+    private readonly asgardLogger: AsgardLogger,
     protected readonly configService: ConfigService,
     private readonly nestOpenAIClientService: NestOpenAIClientService
-  ) {
-    this.trackerLoggerCreator = loggerHelperService.create(
-      ChatGPTGateWayService.name
-    );
-  }
+  ) {}
 
   generalMessages(
     chant: ChatGPTChant,
     customPrompt?: { title: string; linguisticFraming: string }
   ): ChatCompletionRequestMessage[] {
-    const { log, error } = this.trackerLoggerCreator.create('GeneralMessages');
-    log(`called ${chant}`);
+    ('GeneralMessages');
+    this.asgardLogger.log(`called ${chant}`);
 
     const messageChant = setupRequestMessage(chant, customPrompt);
     return messageChant.messages;
@@ -52,14 +42,14 @@ export class ChatGPTGateWayService {
       maxTokens?: number;
     }
   ): Promise<CreateChatCompletionResponse> {
-    const { log, verbose, error } =
-      this.trackerLoggerCreator.create('GeneralMessages');
-    log(`getGPTResponse: user: ${user}`);
-    log(`getGPTResponse: messages:`);
+    this.asgardLogger.log(`getGPTResponse: user: ${user}`);
+    this.asgardLogger.log(`getGPTResponse: messages:`);
     messages?.forEach((m) =>
-      verbose(`${m.role}: ${m.content}, ${m?.name ?? 'unknown'}`)
+      this.asgardLogger.verbose(
+        `${m.role}: ${m.content}, ${m?.name ?? 'unknown'}`
+      )
     );
-    log(`temperature: ${options?.temperature}`);
+    this.asgardLogger.log(`temperature: ${options?.temperature}`);
 
     if (!messages) {
       return undefined;
@@ -78,10 +68,10 @@ export class ChatGPTGateWayService {
       temperature: options?.temperature,
     });
 
-    log(`id: ${response.data?.id}`);
-    log(`model: ${response.data?.model}`);
-    log(`created: ${response.data?.created}`);
-    log(`total token: ${response.data?.usage?.total_tokens}`);
+    this.asgardLogger.log(`id: ${response.data?.id}`);
+    this.asgardLogger.log(`model: ${response.data?.model}`);
+    this.asgardLogger.log(`created: ${response.data?.created}`);
+    this.asgardLogger.log(`total token: ${response.data?.usage?.total_tokens}`);
 
     const data = response.data;
 
@@ -110,11 +100,10 @@ export class ChatGPTGateWayService {
       responses: CreateChatCompletionResponse[];
     }>
   > {
-    const { log, error } = this.trackerLoggerCreator.create('GeneralMessages');
-    log(`getGPTResponse: user: ${user}`);
-    log(`getGPTResponse: messages:`);
-    log(messages);
-    log(`temperature: ${options?.temperature}`);
+    this.asgardLogger.log(`getGPTResponse: user: ${user}`);
+    this.asgardLogger.log(`getGPTResponse: messages:`);
+    this.asgardLogger.log(messages);
+    this.asgardLogger.log(`temperature: ${options?.temperature}`);
 
     const openai = isUseAzure
       ? this.nestOpenAIClientService.getAzureOpenAIApiClient()
@@ -151,7 +140,9 @@ export class ChatGPTGateWayService {
               );
               deltas.push(delta);
             } catch (e) {
-              error(`Error with JSON.parse and ${payload}.\n${e}`);
+              this.asgardLogger.error(
+                `Error with JSON.parse and ${payload}.\n${e}`
+              );
             }
           }
         }

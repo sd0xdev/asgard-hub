@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import PromisePool from '@supercharge/promise-pool/dist';
 import { DataSourceAdapterService } from '../../../data-source-adapter/data-source-adapter.service';
 import { DataSourceType } from '../../../data-source-adapter/adapter/interface/data-source-type.enum';
-import { LoggerHelperService } from '@asgard-hub/nest-winston';
+import { AsgardLogger } from '@asgard-hub/nest-winston';
 import { ChatGPTChant } from '@asgard-hub/utils';
 import { URLDocSummaryOptions } from '../../interface/chatgpt.service.interface';
 import { PartCreateChatCompletionResponse } from '../../interface/create.completion.response.usage.for.rpc.interface';
@@ -17,12 +17,11 @@ export class ImageChatGptService extends BaseFeatureChatGPTService<ImageAdapter>
   private readonly maxParts = 10;
 
   constructor(
-    loggerHelperService: LoggerHelperService,
+    private readonly asgardLogger: AsgardLogger,
     protected readonly chatGPTService: ChatGPTGateWayService,
     protected readonly dataSourceAdapterService: DataSourceAdapterService
   ) {
     super(
-      loggerHelperService,
       dataSourceAdapterService,
       DataSourceType.IMAGE,
       ImageChatGptService.name
@@ -32,10 +31,6 @@ export class ImageChatGptService extends BaseFeatureChatGPTService<ImageAdapter>
   async fetchSummaryWithGPT(
     data: URLDocSummaryOptions
   ): Promise<PartCreateChatCompletionResponse[]> {
-    const { log, error } = this.trackerLoggerCreator.create(
-      'fetchImageSummaryWithGPT'
-    );
-
     // read txt from url
     // convert txt to text
     const { url, user } = data;
@@ -50,7 +45,7 @@ export class ImageChatGptService extends BaseFeatureChatGPTService<ImageAdapter>
     ).slice(0, this.maxParts);
 
     // call get TXT Summary for each part
-    const { results, errors } = await PromisePool.withConcurrency(3)
+    const pool = await PromisePool.withConcurrency(3)
       .for(textContentArray)
       .useCorrespondingResults()
       .onTaskFinished(async (item, pool) => {
@@ -59,7 +54,7 @@ export class ImageChatGptService extends BaseFeatureChatGPTService<ImageAdapter>
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }) + '%';
-        log(`percentage: ${formatted}`);
+        this.asgardLogger.log(`percentage: ${formatted}`);
         await delay(Math.random() * 500 + 256);
       })
       .process(async (content, index, pool) => {
@@ -72,10 +67,13 @@ export class ImageChatGptService extends BaseFeatureChatGPTService<ImageAdapter>
         return summary;
       });
 
-    errors?.length > 0 && errors.forEach((e) => error(e.raw, e.stack, e));
-    const summaries = results
-      .filter((r) => r !== undefined)
-      .sort((a, b) => a.partNumber - b.partNumber);
+    pool.errors?.length > 0 &&
+      pool.errors.forEach((e) => this.asgardLogger.error(e.raw, e.stack, e));
+    const results = pool.results.filter(
+      (r) => r !== undefined && (r as any) !== Symbol.for('failed')
+    );
+
+    const summaries = results.sort((a, b) => a.partNumber - b.partNumber);
 
     return summaries;
   }
@@ -88,11 +86,7 @@ export class ImageChatGptService extends BaseFeatureChatGPTService<ImageAdapter>
       userExpectation?: string;
     }
   ): Promise<PartCreateChatCompletionResponse> {
-    const { log } = this.trackerLoggerCreator.create(
-      `getTXTSummary: Part: ${info.partNumber}`
-    );
-
-    log('transcription start...');
+    this.asgardLogger.log('transcription start...');
 
     // call chatgpt service to general messages
     const generalMessages = this.chatGPTService.generalMessages(
@@ -107,7 +101,7 @@ export class ImageChatGptService extends BaseFeatureChatGPTService<ImageAdapter>
       role: 'user',
     });
 
-    log('get summary start...');
+    this.asgardLogger.log('get summary start...');
     // call chatgpt service to get summary
     const summary = await this.chatGPTService.getGPTResponse(
       generalMessages,
@@ -117,7 +111,7 @@ export class ImageChatGptService extends BaseFeatureChatGPTService<ImageAdapter>
         temperature: this.temperature,
       }
     );
-    log('get summary end...');
+    this.asgardLogger.log('get summary end...');
 
     return {
       ...summary,
