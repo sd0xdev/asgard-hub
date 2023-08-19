@@ -1,9 +1,7 @@
 import { Injectable, Scope } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { join, dirname, basename, extname } from 'path';
-import * as fs from 'fs';
+import { join } from 'path';
 import { exec } from 'youtube-dl-exec';
-import { OnEvent } from '@nestjs/event-emitter';
 
 export interface DownloadAudioEvent {
   audioFilePath: string;

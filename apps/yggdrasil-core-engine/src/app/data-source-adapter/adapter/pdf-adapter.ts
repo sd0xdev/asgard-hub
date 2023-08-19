@@ -1,4 +1,4 @@
-import { Inject, Injectable, Scope } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DownloadService } from '../../services/download-service/download-service.service';
 import { BaseDataSourceAdapter } from './interface/data-source-adapter.interface';
 import { DataSourceType } from './interface/data-source-type.enum';

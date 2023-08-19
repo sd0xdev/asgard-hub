@@ -1,4 +1,4 @@
-import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
+import { Metadata } from '@grpc/grpc-js';
 import { Controller, UseGuards } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { AuthGuard } from '../auth/auth.guard';
@@ -35,11 +35,7 @@ export class ChatGPTController {
 
   @UseGuards(AuthGuard)
   @GrpcMethod('ChatGPTService')
-  generalMessages(
-    data: GeneralMessagesOptions,
-    metadata: Metadata,
-    call: ServerUnaryCall<any, any>
-  ) {
+  generalMessages(data: GeneralMessagesOptions) {
     const result = this.service.generalMessages(
       data.chant as ChatGPTChant,
       data.customPrompt
@@ -51,11 +47,7 @@ export class ChatGPTController {
 
   @UseGuards(AuthGuard)
   @GrpcMethod('ChatGPTService', 'FetchGgtResponse')
-  fetchGptResponse(
-    data: GPTResponseOptions,
-    metadata: Metadata,
-    call: ServerUnaryCall<any, any>
-  ) {
+  fetchGptResponse(data: GPTResponseOptions, metadata: Metadata) {
     const fromMetaData = (metadata.get('azure-service') ?? [])[0] ?? false;
     const isUseAzure = fromMetaData === 'true';
     const temperature = data?.temperature ?? 1;
@@ -75,11 +67,7 @@ export class ChatGPTController {
 
   @UseGuards(AuthGuard)
   @GrpcMethod('ChatGPTService', 'FetchGgtResponseStream')
-  fetchGptResponseStream(
-    data: GPTResponseOptions,
-    metadata: Metadata,
-    call: ServerUnaryCall<any, any>
-  ) {
+  fetchGptResponseStream(data: GPTResponseOptions, metadata: Metadata) {
     const fromMetaData = (metadata.get('azure-service') ?? [])[0] ?? false;
     const isUseAzure = fromMetaData === 'true';
     const temperature = data?.temperature ?? 1;
@@ -99,11 +87,7 @@ export class ChatGPTController {
 
   @UseGuards(AuthGuard)
   @GrpcMethod('ChatGPTService', 'GetCompletionResponse')
-  async getCompletionResponse(
-    data: CompletionResponseOptions,
-    metadata: Metadata,
-    call: ServerUnaryCall<any, any>
-  ) {
+  async getCompletionResponse(data: CompletionResponseOptions) {
     const result = await this.service.getCompletionResponse(
       data.prompt,
       data.model
@@ -114,11 +98,7 @@ export class ChatGPTController {
   // fetch Youtube Summary
   @UseGuards(AuthGuard)
   @GrpcMethod('ChatGPTService', 'FetchYoutubeSummary')
-  async fetchYoutubeSummaryWithGPT(
-    data: YTSummaryOptions,
-    metadata: Metadata,
-    call: ServerUnaryCall<any, any>
-  ) {
+  async fetchYoutubeSummaryWithGPT(data: YTSummaryOptions) {
     const result = await this.gatewayService
       .getFeatureService<YTChatGPTService>(GatewayFeature.YT)
       .fetchSummaryWithGPT(data);
@@ -130,11 +110,7 @@ export class ChatGPTController {
   // fetch Docs Summary
   @UseGuards(AuthGuard)
   @GrpcMethod('ChatGPTService', 'FetchUrlDocSummary')
-  async fetchPDFSummaryWithGPT(
-    data: URLDocSummaryOptions,
-    metadata: Metadata,
-    call: ServerUnaryCall<any, any>
-  ) {
+  async fetchPDFSummaryWithGPT(data: URLDocSummaryOptions) {
     let result = [];
 
     switch (data.dataSourceType) {
@@ -170,11 +146,7 @@ export class ChatGPTController {
   // fetch audio transcription
   @UseGuards(AuthGuard)
   @GrpcMethod('ChatGPTService', 'FetchAudioTranscription')
-  async fetchAudioTranscription(
-    data: AudioChatOptions,
-    metadata: Metadata,
-    call: ServerUnaryCall<any, any>
-  ) {
+  async fetchAudioTranscription(data: AudioChatOptions) {
     const result = await this.gatewayService
       .getFeatureService<AudioChatGPTService>(GatewayFeature.Audio)
       .fetchDataByDataSourceUrl(data);

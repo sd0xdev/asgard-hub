@@ -1,6 +1,11 @@
 version: '3.5'
 
 services:
+  mongodb:
+    image: mongo:6.0
+    ports: ['27017:27017']
+    volumes:
+      - './docker-data/mongodb-data:/data/db'
   redis:
     image: redis:4
     ports: ['6379:6379']

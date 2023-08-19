@@ -1,0 +1,48 @@
+{
+  "name": "nest-langchain",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/nest-langchain/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/nest-langchain",
+        "tsConfig": "libs/nest-langchain/tsconfig.lib.json",
+        "packageJson": "libs/nest-langchain/package.json",
+        "main": "libs/nest-langchain/src/index.ts",
+        "assets": ["libs/nest-langchain/*.md"]
+      }
+    },
+    "publish": {
+      "command": "node tools/scripts/publish.mjs nest-langchain {args.ver} {args.tag}",
+      "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "libs/nest-langchain/**/*.ts",
+          "libs/nest-langchain/package.json"
+        ]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/nest-langchain/jest.config.ts",
+        "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
+      }
+    }
+  },
+  "tags": []
+}
