@@ -9,6 +9,7 @@ you can use grpc, restful, etc. to communicate with the micro-service. and we ha
 ## Packages
 
 - [Nest.js OpenAI Client Package](https://www.npmjs.com/package/@sd0x/nest-openai-client/)
+- [Nest.js LangChain Package](https://www.npmjs.com/package/@sd0x/nest-langchain/)
 
 ## TODO
 
