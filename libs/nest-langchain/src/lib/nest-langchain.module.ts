@@ -10,8 +10,10 @@ import {
 } from './interface/nest.langchain-module';
 import { NestLangchainOptionsSupplement } from './interface/nest.langchain-options.interface';
 import { randomStringGenerator } from '../utils/utils';
+import { ProviderModule } from './provider/provider.module';
 
 @Module({
+  imports: [ProviderModule],
   controllers: [],
   providers: [NestLangchainService],
   exports: [NestLangchainService],

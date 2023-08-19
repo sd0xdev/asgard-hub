@@ -17,10 +17,13 @@ import { IAzureOpenAIConfig } from '../config/azure.openai.config';
 import { IOpenAIConfig } from '../config/open.ai.config';
 import { OpenAIProvider } from '../provider/open-ai/open-ai';
 import { ProviderModule } from '../provider/provider.module';
+import { LangChainService } from './lang-chain/lang-chain.service';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Global()
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     NestOpenAIClientModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
         apiKey: configService.get<IOpenAIConfig>(ConfigPath.OpenAI).apiKey,
@@ -74,6 +77,7 @@ import { ProviderModule } from '../provider/provider.module';
     YoutubeRecordService,
     YoutubeDataService,
     YAudioTranscriptionService,
+    LangChainService,
   ],
   exports: [
     ChatGPTGateWayService,

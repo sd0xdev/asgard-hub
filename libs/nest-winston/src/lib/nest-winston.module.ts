@@ -5,7 +5,7 @@ import {
   WinstonModule,
 } from 'nest-winston';
 import { AsgardLogger } from './logger.service';
-import { NestWinstonOptionsSupplement } from '../interface/nest-winston-options.interface';
+import { AsgardLoggerSupplement } from '../interface/nest-winston-options.interface';
 import {
   NestWinstonModuleAsyncOptions,
   NestWinstonOptionsFactory,
@@ -63,14 +63,14 @@ export class NestWinstonModule {
           useValue: randomStringGenerator(),
         },
         {
-          provide: NestWinstonOptionsSupplement.LOGGER_HELPER_SERVICE,
+          provide: AsgardLoggerSupplement.LOGGER_HELPER_SERVICE,
           useClass: AsgardLogger,
         },
       ],
       exports: [
         NEST_WINSTON_MODULE_ID,
         NEST_WINSTON_MODULE_OPTIONS,
-        NestWinstonOptionsSupplement.LOGGER_HELPER_SERVICE,
+        AsgardLoggerSupplement.LOGGER_HELPER_SERVICE,
       ],
     };
   }

@@ -12,11 +12,11 @@ export interface IAzureOpenAIConfig {
 }
 
 export const azureOpenAIConfig = registerAs(ConfigPath.AzureOpenAI, () => ({
-  enable: process.env.H_AZURE_OPENAI_ENABLE === 'true' ? true : false,
-  apiKey: process.env.H_AZURE_OPENAI_API_KEY,
-  endpoint: process.env.H_AZURE_OPENAI_ENDPOINT,
-  deploymentName: process.env.H_AZURE_OPENAI_DEPLOYMENT_NAME,
-  instanceName: process.env.H_AZURE_OPENAI_INSTANCE_NAME,
-  apiVersion: process.env.H_AZURE_OPENAI_API_VERSION,
-  modelName: process.env.H_AZURE_OPENAI_MODEL_NAME,
+  enable: process.env.A_AZURE_OPENAI_ENABLE === 'true' ? true : false,
+  apiKey: process.env.A_AZURE_OPENAI_API_KEY,
+  endpoint: process.env.A_AZURE_OPENAI_ENDPOINT,
+  deploymentName: process.env.A_AZURE_OPENAI_DEPLOYMENT_NAME,
+  instanceName: process.env.A_AZURE_OPENAI_INSTANCE_NAME,
+  apiVersion: process.env.A_AZURE_OPENAI_API_VERSION,
+  modelName: process.env.A_AZURE_OPENAI_MODEL_NAME,
 }));
