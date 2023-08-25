@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LangChainProvider } from './langchain.provider';
-import { AsgardLoggerSupplement } from '@asgard-hub/nest-winston';
 
 describe('Langchain', () => {
   let provider: LangChainProvider;
