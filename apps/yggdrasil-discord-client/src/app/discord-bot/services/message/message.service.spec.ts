@@ -40,6 +40,14 @@ describe('MessageService', () => {
           },
         },
         {
+          provide: 'LLMAI_PACKAGE',
+          useValue: {
+            getService: jest.fn().mockImplementation(() => {
+              return {};
+            }),
+          },
+        },
+        {
           provide: SetupKeywordService,
           useValue: {},
         },

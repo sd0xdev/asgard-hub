@@ -1,12 +1,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LangChainService } from './lang-chain.service';
+import { NestLangchainOptionsSupplement } from '@sd0x/nest-langchain';
+import { AsgardLoggerSupplement } from '@asgard-hub/nest-winston';
 
 describe('LangChainService', () => {
   let service: LangChainService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [LangChainService],
+      providers: [
+        {
+          provide: NestLangchainOptionsSupplement.NEST_LANGCHAIN_SERVICE,
+          useValue: {},
+        },
+        {
+          provide: AsgardLoggerSupplement.LOGGER_HELPER_SERVICE,
+          useValue: {},
+        },
+        LangChainService,
+      ],
     }).compile();
 
     service = module.get<LangChainService>(LangChainService);

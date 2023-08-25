@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { LangChainProvider } from './langchain.provider';
-import { HahowNestWinstonOptionsSupplement } from '@hahowise-ai/hahow-nest-winston';
-import { MockHahowNestLoggerService } from '../../mock/mock-hahow-nest-logger.service.spec';
+import { AsgardLoggerSupplement } from '@asgard-hub/nest-winston';
 
 describe('Langchain', () => {
   let provider: LangChainProvider;
@@ -10,8 +9,8 @@ describe('Langchain', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         {
-          provide: HahowNestWinstonOptionsSupplement.HAHOW_LOGGER_SERVICE,
-          useValue: new MockHahowNestLoggerService(),
+          provide: 'LOGGER_HELPER_SERVICE',
+          useValue: {},
         },
         LangChainProvider,
       ],
