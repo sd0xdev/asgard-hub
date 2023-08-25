@@ -31,7 +31,7 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage/apps/yggdrasil-core-engine/lcov.info,./coverage/apps/yggdrasil-discord-client/lcov.info,./coverage/libs/nest-openai-client/lcov.info,./coverage/libs/nest-winston/lcov.info,./coverage/libs/utils/lcov.info
+          file: ./coverage/apps/yggdrasil-core-engine/lcov.info,./coverage/apps/yggdrasil-discord-client/lcov.info,./coverage/libs/nest-openai-client/lcov.info,./coverage/libs/nest-winston/lcov.info,./coverage/libs/utils/lcov.info,./coverage/libs/nest-langchain/lcov.info
   push_to_gitlab:
     # if branch is develop, push to gitlab develop branch
     if: github.ref == 'refs/heads/develop'
