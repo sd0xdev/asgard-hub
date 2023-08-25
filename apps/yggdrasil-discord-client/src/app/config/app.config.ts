@@ -6,6 +6,7 @@ export enum ConfigPath {
   DISCORD_BOT = 'discordBot',
   REDIS = 'redis',
   CORE_ENGINE = 'coreEngine',
+  CORE_ENGINE_LLM_AI = 'coreEngineLLMAI',
 }
 
 export interface IAppConfig {

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package llmai;
+
+service LLMAIService {
+  rpc Chat (ChatOptions) returns (ChatCompletionResponse);
+}
+
+message ChatOptions {
+  string userInput = 1;
+  string key = 2;
+}
+
+message ChatCompletionResponse {
+    string response = 1;
+}
+

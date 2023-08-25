@@ -1,3 +1,6 @@
+/**
+ * @deprecated This controller is a v1 feature and will be removed in future versions. Please use the FunctionSelection instead.
+ */
 export enum ChatGPTChant {
   general = 'general',
   translateToEnglish = 'translateToEnglish',

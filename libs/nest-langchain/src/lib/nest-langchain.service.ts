@@ -1,36 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  ChatOpenAI,
-  ChatOpenAICallOptions,
-} from 'langchain/chat_models/openai';
+import { ChatOpenAICallOptions } from 'langchain/chat_models/openai';
 import { NestLangChainAIChatOAuth } from './interface';
-import { ChainValues } from 'langchain/schema';
+import { ChainValues, HumanMessage } from 'langchain/schema';
 import { LangChainProvider } from './provider/langchain/langchain.provider';
-import { Callbacks } from 'langchain/callbacks';
-import { BaseLangChainPrompt } from './interface/base-prompt';
 import { NEST_LANGCHAIN_MODULE_OPTIONS } from './constants/nest.openai.client.constants';
-
-export class functionChainOption {
-  callbacks?: Callbacks;
-  tags?: string[];
-  verbose?: boolean;
-}
-
-export interface NestLangChainParams<T> {
-  input?: T;
-  langChainPromptType: { new (): BaseLangChainPrompt<T> };
-  options?: functionChainOption;
-}
-
-export interface FunctionChainResponse<T> {
-  output: T;
-}
-
-function createInstance<U>(type: {
-  new (): BaseLangChainPrompt<U>;
-}): BaseLangChainPrompt<U> {
-  return new type();
-}
+import { createInstance } from '../utils/utils';
+import {
+  NestLangChainParams,
+  FunctionChainResponse,
+} from './interface/nest.langchain-params';
 
 @Injectable()
 export class NestLangchainService {
@@ -41,12 +19,17 @@ export class NestLangchainService {
   private readonly langchainProvider!: LangChainProvider;
 
   async getFunctionChainResponse<
-    T = ChainValues,
+    T extends ChainValues & ChatOpenAICallOptions = ChainValues &
+      ChatOpenAICallOptions,
     U extends ChainValues & ChatOpenAICallOptions = ChainValues &
       ChatOpenAICallOptions
-  >(params: NestLangChainParams<U>): Promise<T> {
-    // setup chatOpenAI
-    const llm = this.getChatOpenAI({
+  >(
+    params: NestLangChainParams<U>
+  ): Promise<{
+    metaOutput: T;
+    message: string;
+  }> {
+    const llm = this.langchainProvider.getChatOpenAI({
       ...this.nestLangChainAIChatOAuth,
     });
 
@@ -68,13 +51,18 @@ export class NestLangchainService {
     )) as FunctionChainResponse<T>;
 
     return {
-      ...result.output,
+      metaOutput: {
+        ...result.output,
+      },
+      message: langChainPrompt.parseOutputToString(result.output),
     };
   }
 
-  getChatOpenAI(params: NestLangChainAIChatOAuth) {
-    return new ChatOpenAI({
-      ...params,
+  async getGeneralChatResponse(userInput: string) {
+    const llm = this.langchainProvider.getChatOpenAI({
+      ...this.nestLangChainAIChatOAuth,
     });
+
+    return await llm.call([new HumanMessage(userInput)]);
   }
 }

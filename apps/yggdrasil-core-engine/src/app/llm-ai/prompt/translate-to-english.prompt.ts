@@ -15,7 +15,11 @@ export interface TranslateToEnglishPromptResponse {
 }
 
 export class TranslateToEnglishPrompt
-  implements BaseLangChainPrompt<TranslateToEnglishPromptParams>
+  implements
+    BaseLangChainPrompt<
+      TranslateToEnglishPromptParams,
+      TranslateToEnglishPromptResponse
+    >
 {
   private readonly inputVariables = ['userInput'];
 
@@ -57,5 +61,9 @@ export class TranslateToEnglishPrompt
     };
 
     return inputVariables;
+  }
+
+  parseOutputToString(output: TranslateToEnglishPromptResponse) {
+    return output.translationResult;
   }
 }

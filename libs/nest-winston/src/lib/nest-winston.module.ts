@@ -25,7 +25,6 @@ export class NestWinstonModule {
   static async registerAsync(
     options: NestWinstonModuleAsyncOptions
   ): Promise<DynamicModule> {
-    const createProviders = this.createAsyncProviders(options);
     return {
       module: NestWinstonModule,
       imports: [
@@ -57,7 +56,7 @@ export class NestWinstonModule {
         }),
       ],
       providers: [
-        ...createProviders,
+        ...this.createAsyncProviders(options),
         {
           provide: NEST_WINSTON_MODULE_ID,
           useValue: randomStringGenerator(),

@@ -11,9 +11,7 @@ export interface ICoreEngineConfig {
 }
 
 export const coreEngineConfig = registerAs(ConfigPath.CORE_ENGINE, () => {
-  const protoPath = isDev
-    ? resolve(__dirname, '..', '..', 'assets', 'chatgpt.proto')
-    : resolve(__dirname, '.', 'assets', 'chatgpt.proto');
+  const protoPath = getProtoPath('chatgpt.proto');
 
   const env = {
     package: process.env.CORE_ENGINE_PACKAGE,
@@ -24,3 +22,25 @@ export const coreEngineConfig = registerAs(ConfigPath.CORE_ENGINE, () => {
 
   return env;
 });
+
+export const coreEngineLLMAIConfig = registerAs(
+  ConfigPath.CORE_ENGINE_LLM_AI,
+  () => {
+    const protoPath = getProtoPath('llmai.proto');
+
+    const env = {
+      package: process.env.CORE_ENGINE_LLM_AI_PACKAGE,
+      protoPath,
+      url: process.env.CORE_ENGINE_LLM_AI_URL,
+      apiKey: process.env.CORE_ENGINE_API_KEY,
+    };
+
+    return env;
+  }
+);
+
+function getProtoPath(fileName: string) {
+  return isDev
+    ? resolve(__dirname, 'assets', fileName)
+    : resolve(__dirname, '.', 'assets', fileName);
+}

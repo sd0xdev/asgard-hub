@@ -11,7 +11,10 @@ import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { join } from 'path';
 
 const grpcHost = process.env.GRPC_HOST || 'localhost';
-const grpcPort = process.env.GRPC_PORT || 5000;
+const grpcPort = {
+  chatgpt: 5000,
+  llmai: 5001,
+};
 
 async function bootstrap() {
   const app = await NestFactory.create<NestApplication>(AppModule);
@@ -28,19 +31,23 @@ async function bootstrap() {
 }
 
 async function setupMicroservice(app: NestApplication) {
-  const gRCPPackages = ['chatgpt'];
+  const gRCPPackages = ['chatgpt', 'llmai'];
   gRCPPackages.forEach((pkg) => {
     app.connectMicroservice<MicroserviceOptions>({
       transport: Transport.GRPC,
       options: {
         package: pkg,
         protoPath: join(__dirname, `assets/${pkg}/proto/${pkg}.proto`),
-        url: `${grpcHost}:${grpcPort}`,
+        url: `${grpcHost}:${grpcPort[pkg]}`,
       },
     });
   });
   await app.startAllMicroservices();
-  Logger.log(`🚀 gRPC server is running on: ${grpcHost}:${grpcPort}`);
+  Logger.log(
+    `🚀 gRPC server is running on: ${grpcHost}: ${gRCPPackages
+      .map((pkg) => `${pkg}:${grpcPort[pkg]}`)
+      .join(',')}`
+  );
 }
 
 bootstrap();

@@ -21,7 +21,10 @@ import { ClientGrpc } from '@nestjs/microservices';
 import { Metadata } from '@grpc/grpc-js';
 import { splitString } from '../../utils/split-string';
 import { delay } from '../../utils/delay';
-import { ChatGPTService } from '../../interface/chatgpt.service.interface';
+import {
+  ChatGPTService,
+  LLMAIService,
+} from '../../interface/chatgpt.service.interface';
 import { DiscordClientService } from '../discord-client/discord-client.service';
 import { ChatGPTChant } from '../../interface/chatgpt-chant.enum';
 import { DataSourceType } from '../../interface/data-source-type.enum';
@@ -31,6 +34,7 @@ import { AsgardLogger } from '@asgard-hub/nest-winston';
 @Injectable()
 export class MessageService implements OnModuleInit {
   private chatGPTService: ChatGPTService;
+  private llmAIService: LLMAIService;
   private metadata = new Metadata();
 
   constructor(
@@ -39,6 +43,8 @@ export class MessageService implements OnModuleInit {
     private readonly options: DiscordBotModuleOptions,
     @Inject('CHATGPT_PACKAGE')
     private readonly grpcClient: ClientGrpc,
+    @Inject('LLMAI_PACKAGE')
+    private readonly llmaiGrpcClient: ClientGrpc,
     private readonly keywordService: SetupKeywordService,
     private readonly discordClientService: DiscordClientService
   ) {}
@@ -46,6 +52,8 @@ export class MessageService implements OnModuleInit {
   async onModuleInit() {
     this.chatGPTService =
       this.grpcClient.getService<ChatGPTService>('ChatGPTService');
+    this.llmAIService =
+      this.llmaiGrpcClient.getService<LLMAIService>('LLMAIService');
 
     this.metadata.set('authorization', this.options.config.rpcApiKey);
     this.metadata.set('azure-service', `${this.options.config.isAzureService}`);
@@ -290,30 +298,18 @@ export class MessageService implements OnModuleInit {
       // show typing
       await (message.channel as TextChannel).sendTyping();
 
-      // fetch all replied messages
-      let messageStack = await this.setupHistoryMessages(message);
-
-      // if has ogg speech, convert to text
-      if (this.isOggSpeechRef(message)) {
-        messageStack = await this.setupOggSpeech(messageStack);
-      }
-
-      this.asgardLogger.log(`setting up request...`);
-      const request = await this.setupGeneralHistoryMessages(messageStack);
-      request.forEach((r) =>
-        this.asgardLogger.log(`${r.role}, ${r.name}: ${r.content}`)
+      const result = await lastValueFrom(
+        this.llmAIService.chat(
+          {
+            userInput: message.content,
+          },
+          this.metadata
+        )
       );
-      this.asgardLogger.log(`setting up response...`);
 
-      const result = await this.responseUser(request, message.author.id);
       const response = result.response;
 
-      this.asgardLogger.log(`successfully get response`);
-
-      this.asgardLogger.log(`prepare to send message...`);
-      await (message.channel as TextChannel).sendTyping();
-
-      await this.sendMessageReply(response, message, result.tokens);
+      await this.sendMessageReply(response, message);
       this.asgardLogger.log(`successfully send message: ${response}`);
       this.asgardLogger.log(`successfully send message`);
     } catch (e) {

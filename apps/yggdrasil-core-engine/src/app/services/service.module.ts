@@ -12,12 +12,8 @@ import { NestWinstonModule } from '@asgard-hub/nest-winston';
 import { IAppConfig, ConfigPath } from '../config/app.config';
 import { isDev, isStaging, isProd } from '../constants/common.constant';
 import { NestOpenAIClientModule } from '@sd0x/nest-openai-client';
-import { NestLangChainModule } from '@sd0x/nest-langchain';
 import { IAzureOpenAIConfig } from '../config/azure.openai.config';
 import { IOpenAIConfig } from '../config/open.ai.config';
-import { OpenAIProvider } from '../provider/open-ai/open-ai';
-import { ProviderModule } from '../provider/provider.module';
-import { LangChainService } from './lang-chain/lang-chain.service';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Global()
@@ -44,18 +40,6 @@ import { ScheduleModule } from '@nestjs/schedule';
       }),
       inject: [ConfigService],
     }),
-    NestLangChainModule.registerAsync({
-      imports: [ProviderModule],
-      useFactory: (openAIProvider: OpenAIProvider) => ({
-        runtime: {
-          isDev,
-          isStaging,
-          isProd,
-        },
-        langChainAIChatOAuth: openAIProvider.fetchChatOpenAIInput(),
-      }),
-      inject: [OpenAIProvider],
-    }),
     NestWinstonModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
         runtime: {
@@ -77,7 +61,6 @@ import { ScheduleModule } from '@nestjs/schedule';
     YoutubeRecordService,
     YoutubeDataService,
     YAudioTranscriptionService,
-    LangChainService,
   ],
   exports: [
     ChatGPTGateWayService,

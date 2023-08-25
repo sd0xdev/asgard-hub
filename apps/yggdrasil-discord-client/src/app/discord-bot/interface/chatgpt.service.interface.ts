@@ -111,3 +111,19 @@ export interface ChatGPTService {
     metadata?: Metadata
   ): Observable<CreateChatTranscriptionResponses>;
 }
+
+export interface ChatOptions {
+  userInput: string;
+  key?: string;
+}
+
+export interface ChatCompletionResponse {
+  response: string;
+}
+
+export interface LLMAIService {
+  chat(
+    options: ChatOptions,
+    metadata?: Metadata
+  ): Observable<ChatCompletionResponse>;
+}

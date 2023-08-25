@@ -6,6 +6,7 @@ import {
 import { ChatOpenAI } from 'langchain/chat_models/openai';
 import { LLMChain } from 'langchain/dist';
 import { z } from 'zod';
+import { NestLangChainAIChatOAuth } from '../../interface';
 
 @Injectable()
 export class LangChainProvider {
@@ -14,5 +15,11 @@ export class LangChainProvider {
     input: Omit<StructuredOutputChainInput, 'outputSchema'>
   ): LLMChain<any, ChatOpenAI> {
     return createStructuredOutputChainFromZod(zodSchema, input);
+  }
+
+  getChatOpenAI(params: NestLangChainAIChatOAuth) {
+    return new ChatOpenAI({
+      ...params,
+    });
   }
 }
