@@ -8,7 +8,7 @@ import {
   ThreadChannel,
 } from 'discord.js';
 import { List, Stack } from 'immutable';
-import { lastValueFrom } from 'rxjs';
+import { ReplaySubject, lastValueFrom, switchMap } from 'rxjs';
 import {
   DISCORD_BOT_MODULE_OPTIONS,
   DiSCORD_SPLIT_MESSAGE_TARGET,
@@ -23,6 +23,7 @@ import { splitString } from '../../utils/split-string';
 import { delay } from '../../utils/delay';
 import {
   ChatGPTService,
+  ChatOptions,
   LLMAIService,
 } from '../../interface/chatgpt.service.interface';
 import { DiscordClientService } from '../discord-client/discord-client.service';
@@ -297,21 +298,24 @@ export class MessageService implements OnModuleInit {
     try {
       // show typing
       await (message.channel as TextChannel).sendTyping();
+      const request$ = new ReplaySubject<ChatOptions>();
+      request$.next({
+        userInput: message.content,
+      });
+      request$.complete();
+      this.llmAIService
+        .chatStream(request$, this.metadata)
+        .pipe(
+          switchMap(async (result) => {
+            await this.sendMessageReply(result?.data, message);
 
-      const result = await lastValueFrom(
-        this.llmAIService.chat(
-          {
-            userInput: message.content,
-          },
-          this.metadata
+            this.asgardLogger.log(
+              `successfully send message: ${result?.data}`
+            );
+            this.asgardLogger.log(`successfully send message`);
+          })
         )
-      );
-
-      const response = result.response;
-
-      await this.sendMessageReply(response, message);
-      this.asgardLogger.log(`successfully send message: ${response}`);
-      this.asgardLogger.log(`successfully send message`);
+        .subscribe();
     } catch (e) {
       this.asgardLogger.error(e);
       await this.sendMessageReply(

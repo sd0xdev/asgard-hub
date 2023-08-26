@@ -4,6 +4,7 @@ package llmai;
 
 service LLMAIService {
   rpc Chat (ChatOptions) returns (ChatCompletionResponse);
+  rpc ChatStream (stream ChatOptions) returns (stream ChatCompletionResponse);
 }
 
 message ChatOptions {
@@ -12,6 +13,9 @@ message ChatOptions {
 }
 
 message ChatCompletionResponse {
-    string response = 1;
+  string id = 1;
+  int32 timestamp = 2;
+  string uuid = 3;
+  string event = 4;
+  string data = 5;
 }
-

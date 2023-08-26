@@ -1,4 +1,4 @@
-import { Injectable, Scope } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   StructuredOutputChainInput,
   createStructuredOutputChainFromZod,
@@ -13,7 +13,7 @@ export class LangChainProvider {
   createStructuredOutputChainFromZod<T extends z.AnyZodObject>(
     zodSchema: T,
     input: Omit<StructuredOutputChainInput, 'outputSchema'>
-  ): LLMChain<any, ChatOpenAI> {
+  ): LLMChain<T, ChatOpenAI> {
     return createStructuredOutputChainFromZod(zodSchema, input);
   }
 

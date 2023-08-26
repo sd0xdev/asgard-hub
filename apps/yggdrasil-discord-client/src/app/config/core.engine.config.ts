@@ -40,7 +40,7 @@ export const coreEngineLLMAIConfig = registerAs(
 );
 
 function getProtoPath(fileName: string) {
-  return isDev
-    ? resolve(__dirname, 'assets', fileName)
+  return process.env['IS_DEBUG']
+    ? resolve(__dirname, '..', '..', 'assets', fileName)
     : resolve(__dirname, '.', 'assets', fileName);
 }

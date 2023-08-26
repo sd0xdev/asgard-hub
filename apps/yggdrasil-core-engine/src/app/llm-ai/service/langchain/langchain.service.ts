@@ -20,16 +20,12 @@ export class LangChainService {
     userInput: string,
     langChainPromptType: { new (): BaseLangChainPrompt<T> }
   ) {
-    const result = await this.nestLangchainService.getFunctionChainResponse<T>({
+    return this.nestLangchainService.getFunctionChainResponse<T>({
       input: {
         userInput,
       },
       langChainPromptType,
     });
-
-    this.asgardLogger.debug(result);
-
-    return result;
   }
 
   async getGeneralChatResponse(userInput: string) {
@@ -37,6 +33,11 @@ export class LangChainService {
       userInput
     );
 
-    return message.content;
+    return {
+      metaOutput: {
+        ...message,
+      },
+      response: message.content,
+    };
   }
 }

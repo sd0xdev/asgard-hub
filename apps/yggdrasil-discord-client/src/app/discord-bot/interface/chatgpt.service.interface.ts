@@ -118,12 +118,21 @@ export interface ChatOptions {
 }
 
 export interface ChatCompletionResponse {
-  response: string;
+  id: string;
+  timestamp: number;
+  event: string;
+  uuid: string;
+  data: string;
 }
 
 export interface LLMAIService {
   chat(
     options: ChatOptions,
+    metadata?: Metadata
+  ): Observable<ChatCompletionResponse>;
+
+  chatStream(
+    options: Observable<ChatOptions>,
     metadata?: Metadata
   ): Observable<ChatCompletionResponse>;
 }

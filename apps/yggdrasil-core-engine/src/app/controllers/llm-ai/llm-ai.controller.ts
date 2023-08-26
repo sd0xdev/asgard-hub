@@ -1,10 +1,12 @@
 import { Controller, Inject, UseGuards } from '@nestjs/common';
-import { LangChainService } from '../../llm-ai/lang-chain/lang-chain.service';
 import { AuthGuard } from '../../auth/auth.guard';
 import { FunctionSelection } from '@asgard-hub/utils';
-import { TranslateToEnglishPrompt } from '../../llm-ai/prompt/translate-to-english.prompt';
-import { GrpcMethod } from '@nestjs/microservices';
-import { AsgardLoggerSupplement, AsgardLogger } from '@asgard-hub/nest-winston';
+import { GrpcMethod, GrpcStreamMethod } from '@nestjs/microservices';
+import {
+  GrpcResponse,
+  LLMAIService,
+} from '../../llm-ai/service/llmai/llmai.service';
+import { Observable, Subject, switchMap } from 'rxjs';
 
 export interface ChatOptions {
   userInput: string;
@@ -14,43 +16,26 @@ export interface ChatOptions {
 @UseGuards(AuthGuard)
 @Controller('llm-ai')
 export class LLMAIController {
-  @Inject(AsgardLoggerSupplement.LOGGER_HELPER_SERVICE)
-  private readonly asgardLogger: AsgardLogger;
   @Inject()
-  private readonly langChainService: LangChainService;
+  private readonly llmAIService: LLMAIService;
 
   @GrpcMethod('LLMAIService')
-  async chat(data: ChatOptions) {
-    const type = this.promptSelect(data.key);
-    let response = '';
-    if (!type) {
-      response = await this.langChainService.getGeneralChatResponse(
-        data.userInput
-      );
-    } else {
-      response = (
-        await this.langChainService.getFunctionChainResponse(
-          data.userInput,
-          type
-        )
-      ).message;
-    }
-
-    this.asgardLogger.debug(response);
-
-    return {
-      response,
-    };
+  chat(data: ChatOptions) {
+    return this.llmAIService.chat(data);
   }
 
-  promptSelect(key: FunctionSelection) {
-    switch (key) {
-      case FunctionSelection.generalChat:
-        return undefined;
-      case FunctionSelection.anyTranslateToEnglish:
-        return TranslateToEnglishPrompt;
-      default:
-        return undefined;
-    }
+  @GrpcStreamMethod('LLMAIService', 'ChatStream')
+  chatStream(data: Observable<ChatOptions>) {
+    const subject = new Subject<GrpcResponse>();
+
+    data
+      .pipe(
+        switchMap((data) => {
+          return this.llmAIService.chat(data, subject);
+        })
+      )
+      .subscribe();
+
+    return subject.asObservable();
   }
 }

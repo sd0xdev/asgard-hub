@@ -8,10 +8,11 @@ import { IAppConfig, ConfigPath } from '../config/app.config';
 import { isDev, isStaging, isProd } from '../constants/common.constant';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { LLMAIController } from '../controllers/llm-ai/llm-ai.controller';
-import { LangChainService } from './lang-chain/lang-chain.service';
+import { LangChainService } from './service/langchain/langchain.service';
 import { NestLangChainModule } from '@sd0x/nest-langchain';
 import { OpenAIProvider } from '../provider/open-ai/open-ai';
 import { ProviderModule } from '../provider/provider.module';
+import { LLMAIService } from './service/llmai/llmai.service';
 
 @Module({
   imports: [
@@ -43,8 +44,8 @@ import { ProviderModule } from '../provider/provider.module';
     MongoModule,
     DataSourceAdapterModule,
   ],
-  providers: [LangChainService],
-  exports: [LangChainService],
+  providers: [LangChainService, LLMAIService],
+  exports: [LLMAIService],
   controllers: [LLMAIController],
 })
 export class LLMAIModule {}

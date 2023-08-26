@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { LangChainService } from './lang-chain.service';
+import { LangChainService } from './langchain.service';
 import { NestLangchainOptionsSupplement } from '@sd0x/nest-langchain';
 import { AsgardLoggerSupplement } from '@asgard-hub/nest-winston';
 
