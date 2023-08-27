@@ -8,7 +8,7 @@ import {
   ThreadChannel,
 } from 'discord.js';
 import { List, Stack } from 'immutable';
-import { ReplaySubject, lastValueFrom, switchMap } from 'rxjs';
+import { ReplaySubject, catchError, lastValueFrom, of, switchMap } from 'rxjs';
 import {
   DISCORD_BOT_MODULE_OPTIONS,
   DiSCORD_SPLIT_MESSAGE_TARGET,
@@ -295,37 +295,46 @@ export class MessageService implements OnModuleInit {
   async createResponse(message: Message<boolean>) {
     message = await this.getRefreshedMessage(message);
 
-    try {
-      // show typing
-      await (message.channel as TextChannel).sendTyping();
-      const request$ = new ReplaySubject<ChatOptions>();
-      request$.next({
-        userInput: message.content,
-      });
-      request$.complete();
-      this.llmAIService
-        .chatStream(request$, this.metadata)
-        .pipe(
-          switchMap(async (result) => {
-            await this.sendMessageReply(result?.data, message);
+    // show typing
+    await (message.channel as TextChannel).sendTyping();
+    const request$ = new ReplaySubject<ChatOptions>();
+    request$.next({
+      userInput: message.content,
+    });
+    request$.complete();
 
-            this.asgardLogger.log(
-              `successfully send message: ${result?.data}`
-            );
-            this.asgardLogger.log(`successfully send message`);
-          })
-        )
-        .subscribe();
-    } catch (e) {
-      this.asgardLogger.error(e);
-      await this.sendMessageReply(
-        `很遺憾，目前暫時無法服務您。請稍後再試， Message: ${e?.message}`,
-        message
-      );
-    }
+    const subscription = this.llmAIService
+      .chatStream(request$, this.metadata)
+      .pipe(
+        switchMap(async (result) => {
+          const isMessage = result.event === 'message';
+
+          const response = isMessage
+            ? JSON.parse(result.data).response
+            : result.data;
+
+          isMessage && (await this.sendMessageReply(response, message));
+
+          this.asgardLogger.log(`successfully send message: ${response}`);
+        }),
+        catchError(async (e) => {
+          this.asgardLogger.error(e);
+          await this.sendMessageReply(
+            `很遺憾，目前暫時無法服務您。請稍後再試， Message: ${e?.message}`,
+            message
+          );
+          return;
+        })
+      )
+      .subscribe({
+        complete: () => {
+          this.asgardLogger.log(`complete subscription`);
+          subscription.unsubscribe();
+        },
+      });
   }
 
-  private async getRefreshedMessage(message: Message<boolean>) {
+  async getRefreshedMessage(message: Message<boolean>) {
     const client = this.discordClientService.dClient;
     const refreshedChannel: TextChannel = (await client.channels.fetch(
       message.channelId,

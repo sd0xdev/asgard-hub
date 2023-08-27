@@ -16,9 +16,15 @@ import { SetupKeywordService } from './services/setup-keyword/setup-keyword.serv
 import { MessageService } from './services/message/message.service';
 import { DiscordClientService } from './services/discord-client/discord-client.service';
 import { MessageController } from './controller/message.controller';
+import { LLMAIChatService } from './services/llmai/llmai.chat.service';
 
 @Module({
-  providers: [SetupKeywordService, MessageService, DiscordClientService],
+  providers: [
+    SetupKeywordService,
+    MessageService,
+    DiscordClientService,
+    LLMAIChatService,
+  ],
   controllers: [MessageController],
 })
 export class DiscordBotModule {

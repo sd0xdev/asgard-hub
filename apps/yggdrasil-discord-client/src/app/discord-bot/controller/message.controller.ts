@@ -7,8 +7,16 @@ import { DataSourceType } from '../interface/data-source-type.enum';
 export class MessageController {
   constructor(private readonly messageService: MessageService) {}
 
+  /**
+   * @deprecated in v1, use `chatbot:discord:llm:ai:chat` instead
+   */
   @EventPattern('chatbot:discord:chat')
   async handleChatCreatedEvent(data: any) {
+    await this.messageService.createResponse(data);
+  }
+
+  @EventPattern('chatbot:discord:llm:ai:chat')
+  async handleLLMAIChatCreatedEvent(data: any) {
     await this.messageService.createResponse(data);
   }
 
