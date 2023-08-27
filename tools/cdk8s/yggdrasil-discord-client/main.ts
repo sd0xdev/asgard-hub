@@ -17,6 +17,95 @@ require('dotenv').config({
     : path.resolve(__dirname, './env', `.env.${process.env.NODE_ENV}`),
 });
 
+const env = [
+  {
+    name: 'PACKAGE_NAME',
+    value: 'yggdrasil-discord-client',
+  },
+  {
+    name: 'CORE_ENGINE_PACKAGE',
+    value: 'chatgpt',
+  },
+  {
+    name: 'CORE_ENGINE_LLM_AI_PACKAGE',
+    value: 'llmai',
+  },
+  {
+    name: 'CORE_ENGINE_URL',
+    value: process.env.CORE_ENGINE_URL ?? 'localhost:5000',
+  },
+  {
+    name: 'CORE_ENGINE_LLM_AI_URL',
+    value: process.env.CORE_ENGINE_LLM_AI_URL ?? 'localhost:5001',
+  },
+];
+
+const secretRef = [
+  {
+    name: 'CORE_ENGINE_API_KEY',
+    valueFrom: {
+      secretKeyRef: {
+        name: 'yggdrasil-discord-client',
+        key: 'core-engine-api-key',
+      },
+    },
+  },
+  {
+    name: 'DISCORD_TOKEN',
+    valueFrom: {
+      secretKeyRef: {
+        name: 'yggdrasil-discord-client',
+        key: 'discord-token',
+      },
+    },
+  },
+  {
+    name: 'DISCORD_BOT_CLIENT_ID',
+    valueFrom: {
+      secretKeyRef: {
+        name: 'yggdrasil-discord-client',
+        key: 'discord-bot-client-id',
+      },
+    },
+  },
+  {
+    name: 'DISCORD_DEVELOP_CHANNEL_ID',
+    valueFrom: {
+      secretKeyRef: {
+        name: 'yggdrasil-discord-client',
+        key: 'discord-develop-channel-id',
+      },
+    },
+  },
+  {
+    name: 'DISCORD_DISABLE_BOT_CHANNEL_IDS',
+    valueFrom: {
+      secretKeyRef: {
+        name: 'yggdrasil-discord-client',
+        key: 'discord-disable-bot-channel-ids',
+      },
+    },
+  },
+  {
+    name: 'DISCORD_PERMANENT_CHANNEL_ID',
+    valueFrom: {
+      secretKeyRef: {
+        name: 'yggdrasil-discord-client',
+        key: 'discord-permanent-channel-id',
+      },
+    },
+  },
+  {
+    name: 'DISCORD_PERMANENT_CHANNEL_IDS',
+    valueFrom: {
+      secretKeyRef: {
+        name: 'yggdrasil-discord-client',
+        key: 'discord-permanent-channel-ids',
+      },
+    },
+  },
+];
+
 export class MyChart extends Chart {
   appContainerName = process.env.CONTAINERNAME ?? 'yggdrasil-discord-client';
 
@@ -118,10 +207,12 @@ export class MyChart extends Chart {
                     name: 'SERVICE_TAGS',
                     value: `${process.env.SERVICE_TAGS ?? 'development'}`,
                   },
+                  ...env,
+                  ...secretRef,
                 ],
                 livenessProbe: {
                   httpGet: {
-                    path: '/',
+                    path: '/api',
                     port: IntOrString.fromNumber(3000),
                   },
                   initialDelaySeconds: 10,

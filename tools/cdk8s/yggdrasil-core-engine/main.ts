@@ -5,6 +5,7 @@ import {
   KubeDeployment,
   KubeNamespace,
   KubeRoleBinding,
+  KubeService,
   KubeServiceAccount,
   Quantity,
 } from './imports/k8s';
@@ -16,6 +17,116 @@ require('dotenv').config({
     ? path.resolve(__dirname, './env', '.env')
     : path.resolve(__dirname, './env', `.env.${process.env.NODE_ENV}`),
 });
+
+const env = [
+  {
+    name: 'NODE_ENV',
+    value: `${process.env.SERVICE_TAGS ?? 'development'}`,
+  },
+  {
+    name: 'PACKAGE_NAME',
+    value: `${process.env.PACKAGE_NAME ?? 'Yggdrasil Core Engine'}`,
+  },
+  {
+    name: 'SERVICE_NAME',
+    value: `${process.env.SERVICE_NAME ?? 'yggdrasil-core-engine'}`,
+  },
+  {
+    name: 'LOGGER_LEVEL',
+    value: `${process.env.LOGGER_LEVEL ?? 'info'}`,
+  },
+  {
+    name: 'A_AZURE_OPENAI_ENABLE',
+    value: `${process.env.A_AZURE_OPENAI_ENABLE ?? 'true'}`,
+  },
+  {
+    name: 'A_AZURE_OPENAI_DEPLOYMENT_NAME',
+    value: `${process.env.A_AZURE_OPENAI_DEPLOYMENT_NAME ?? 'gpt-3_5'}`,
+  },
+  {
+    name: 'A_AZURE_OPENAI_MODEL_NAME',
+    value: `${process.env.A_AZURE_OPENAI_MODEL_NAME ?? 'gpt-35-turbo'}`,
+  },
+  {
+    name: 'A_AZURE_OPENAI_API_VERSION',
+    value: `${process.env.A_AZURE_OPENAI_API_VERSION ?? '2023-07-01-preview'}`,
+  },
+];
+
+const secretRef = [
+  {
+    name: 'CORE_ENGINE_API_KEY',
+    valueFrom: {
+      secretKeyRef: {
+        name: 'yggdrasil-core-engine',
+        key: 'core-engine-api-key',
+      },
+    },
+  },
+  {
+    name: 'OPENAI_API_KEY',
+    valueFrom: {
+      secretKeyRef: {
+        name: 'yggdrasil-core-engine',
+        key: 'openai-api-key',
+      },
+    },
+  },
+  {
+    name: 'CHATGPT_ORG',
+    valueFrom: {
+      secretKeyRef: {
+        name: 'yggdrasil-core-engine',
+        key: 'chatgpt-org',
+      },
+    },
+  },
+  {
+    name: 'A_AZURE_OPENAI_API_KEY',
+    valueFrom: {
+      secretKeyRef: {
+        name: 'yggdrasil-core-engine',
+        key: 'a-azure-openai-api-key',
+      },
+    },
+  },
+  {
+    name: 'A_AZURE_OPENAI_ENDPOINT',
+    valueFrom: {
+      secretKeyRef: {
+        name: 'yggdrasil-core-engine',
+        key: 'a-azure-openai-endpoint',
+      },
+    },
+  },
+  {
+    name: 'A_AZURE_OPENAI_INSTANCE_NAME',
+    valueFrom: {
+      secretKeyRef: {
+        name: 'yggdrasil-core-engine',
+        key: 'a-azure-openai-instance-name',
+      },
+    },
+  },
+  {
+    name: 'RPC_API_KEY',
+    valueFrom: {
+      secretKeyRef: {
+        name: 'yggdrasil-core-engine',
+        key: 'rpc-api-key',
+      },
+    },
+  },
+  {
+    name: 'MONGO_DB_URI',
+    valueFrom: {
+      secretKeyRef: {
+        name: 'yggdrasil-core-engine',
+        key: 'mongo-db-uri',
+      },
+    },
+  },
+];
 
 export class MyChart extends Chart {
   appContainerName = process.env.CONTAINERNAME ?? 'yggdrasil-core-engine';
@@ -35,6 +146,7 @@ export class MyChart extends Chart {
     });
 
     this.setupApp();
+    this.setupService();
 
     // setup cronjob service account
     new KubeServiceAccount(this, 'service-account', {
@@ -118,10 +230,12 @@ export class MyChart extends Chart {
                     name: 'SERVICE_TAGS',
                     value: `${process.env.SERVICE_TAGS ?? 'development'}`,
                   },
+                  ...env,
+                  ...secretRef,
                 ],
                 livenessProbe: {
                   httpGet: {
-                    path: '/',
+                    path: '/api/health',
                     port: IntOrString.fromNumber(3000),
                   },
                   initialDelaySeconds: 10,
@@ -130,6 +244,44 @@ export class MyChart extends Chart {
             ],
           },
         },
+      },
+    });
+  }
+
+  private setupService() {
+    new KubeService(this, 'service', {
+      metadata: {
+        name: this.labels.service,
+        namespace: this.namespace,
+      },
+      spec: {
+        type: 'ClusterIP',
+        selector: {
+          app: this.labels.app,
+        },
+        ports: [
+          {
+            port: 80,
+            targetPort: IntOrString.fromNumber(
+              Number(process.env.APP_CLUSTER_PORT ?? 3001)
+            ),
+            name: 'http',
+          },
+          {
+            port: Number(process.env.APP_CLUSTER_GRPC_PORT ?? 5000),
+            targetPort: IntOrString.fromNumber(
+              Number(process.env.APP_CLUSTER_GRPC_PORT ?? 5000)
+            ),
+            name: 'grpc',
+          },
+          {
+            port: Number(process.env.APP_CLUSTER_GRPC2_PORT ?? 5001),
+            targetPort: IntOrString.fromNumber(
+              Number(process.env.APP_CLUSTER_GRPC2_PORT ?? 5001)
+            ),
+            name: 'grpc2',
+          },
+        ],
       },
     });
   }
