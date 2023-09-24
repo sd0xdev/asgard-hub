@@ -13,6 +13,7 @@ import {
   Subject,
   catchError,
   finalize,
+  forkJoin,
   from,
   lastValueFrom,
   of,
@@ -85,13 +86,11 @@ export class DiscordBotService implements OnApplicationBootstrap {
 
   private messageCreateListenerObservers(message: Message<boolean>) {
     const stopSignal$ = new Subject();
-    return from([
-      this.checkIsBotMessage(message),
-      this.checkShouldReply(message),
-      this.checkIsDisableBotChannel(message),
+    return forkJoin([
+      of(this.checkIsBotMessage(message)),
+      of(this.checkShouldReply(message)),
+      of(this.checkIsDisableBotChannel(message)),
     ]).pipe(
-      take(3),
-      toArray(),
       switchMap((mods) => {
         if (mods.some((mod) => mod === true)) {
           stopSignal$.next('STOP');
