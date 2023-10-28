@@ -16,6 +16,8 @@ import { openAIConfig } from './config/open.ai.config';
 import { NestWinstonModule } from '@asgard-hub/nest-winston';
 import { ChatGPTModule } from './chatgpt/chatgpt.module';
 import { mongoDBConfig } from './config/mongo.db.config';
+import { LLMAIController } from './controllers/llm-ai/llm-ai.controller';
+import { LLMAIModule } from './llm-ai/llm-ai.module';
 
 @Module({
   imports: [
@@ -43,8 +45,9 @@ import { mongoDBConfig } from './config/mongo.db.config';
       inject: [ConfigService],
     }),
     ChatGPTModule,
+    LLMAIModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, LLMAIController],
   providers: [ConfigService, AppService],
   exports: [ConfigService],
 })

@@ -13,10 +13,17 @@ jobs:
         with:
           node-version: '18.x'
           registry-url: 'https://registry.npmjs.org'
-      - name: Install dependencies, build and publish 🔧
+      - name: Install dependencies, build 🔧 and publish 🚀 nest-openai-client
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npm ci
           npx nx run nest-openai-client:build
           npx nx run nest-openai-client:publish --ver=${{ github.event.release.tag_name }} --tag=latest
+      - name: Install dependencies, build 🔧 and publish 🚀 nest-langchain:build
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm ci
+          npx nx run nest-langchain:build
+          npx nx run nest-langchain:publish --ver=${{ github.event.release.tag_name }} --tag=latest

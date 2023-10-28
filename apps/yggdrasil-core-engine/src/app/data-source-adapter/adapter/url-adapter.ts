@@ -1,10 +1,8 @@
-import { HttpService } from '@nestjs/axios';
 import { BaseDataSourceAdapter } from './interface/data-source-adapter.interface';
 import { DataSourceType } from './interface/data-source-type.enum';
-import { lastValueFrom } from 'rxjs';
 import * as cheerio from 'cheerio';
 import { DownloadService } from '../../services/download-service/download-service.service';
-import { Inject, Injectable, Scope } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 export interface URLData {
   title: string;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { DataSourceType } from '../../data-source-adapter/adapter/interface/data-source-type.enum';
 import { DataSourceAdapterService } from '../../data-source-adapter/data-source-adapter.service';
 import { PartCreateChatCompletionResponse } from '../interface/create.completion.response.usage.for.rpc.interface';

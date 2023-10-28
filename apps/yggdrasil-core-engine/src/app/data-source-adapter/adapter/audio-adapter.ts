@@ -1,7 +1,7 @@
 import { CreateTranscriptionResponse } from 'openai';
 import { BaseDataSourceAdapter } from './interface/data-source-adapter.interface';
 import { DataSourceType } from './interface/data-source-type.enum';
-import { Inject, Injectable, Scope } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   DownloadFileType,
   DownloadService,
@@ -31,8 +31,7 @@ export class AudioAdapter extends BaseDataSourceAdapter {
   }
 
   async getDataFromPath<T extends CreateTranscriptionResponse>(
-    path: string,
-    url?: string
+    path: string
   ): Promise<T> {
     // call chatgpt service to get transcription
     const transcription = await this.chatGPTService.getTranscriptionResponse(

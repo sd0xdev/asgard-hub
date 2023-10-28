@@ -6,7 +6,7 @@ import { TXTChatGptService } from './service/txt-chat-gpt/txt-chat-gpt.service';
 import { PDFChatGPTService } from './service/pdf-chat-gpt/pdf-chat-gpt.service';
 import { ImageChatGptService } from './service/image-chat-gpt/image-chat-gpt.service';
 import { GatewayService } from './service/gateway-service/gateway-service.service';
-import { ChatGPTController } from '../controllers/chatgpt.controller';
+import { ChatGPTController } from '../controllers/chatgpt/chatgpt.controller';
 import { ServiceModule } from '../services/service.module';
 import { DataSourceAdapterModule } from '../data-source-adapter/data-source-adapter.module';
 import { AudioChatGPTService } from './service/audio-chat-gpt/audio-chat-gpt.service';

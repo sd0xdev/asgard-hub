@@ -8,7 +8,7 @@ import {
   ThreadChannel,
 } from 'discord.js';
 import { List, Stack } from 'immutable';
-import { lastValueFrom } from 'rxjs';
+import { ReplaySubject, catchError, lastValueFrom, of, switchMap } from 'rxjs';
 import {
   DISCORD_BOT_MODULE_OPTIONS,
   DiSCORD_SPLIT_MESSAGE_TARGET,
@@ -21,7 +21,11 @@ import { ClientGrpc } from '@nestjs/microservices';
 import { Metadata } from '@grpc/grpc-js';
 import { splitString } from '../../utils/split-string';
 import { delay } from '../../utils/delay';
-import { ChatGPTService } from '../../interface/chatgpt.service.interface';
+import {
+  ChatGPTService,
+  ChatOptions,
+  LLMAIService,
+} from '../../interface/chatgpt.service.interface';
 import { DiscordClientService } from '../discord-client/discord-client.service';
 import { ChatGPTChant } from '../../interface/chatgpt-chant.enum';
 import { DataSourceType } from '../../interface/data-source-type.enum';
@@ -31,6 +35,7 @@ import { AsgardLogger } from '@asgard-hub/nest-winston';
 @Injectable()
 export class MessageService implements OnModuleInit {
   private chatGPTService: ChatGPTService;
+  private llmAIService: LLMAIService;
   private metadata = new Metadata();
 
   constructor(
@@ -39,6 +44,8 @@ export class MessageService implements OnModuleInit {
     private readonly options: DiscordBotModuleOptions,
     @Inject('CHATGPT_PACKAGE')
     private readonly grpcClient: ClientGrpc,
+    @Inject('LLMAI_PACKAGE')
+    private readonly llmaiGrpcClient: ClientGrpc,
     private readonly keywordService: SetupKeywordService,
     private readonly discordClientService: DiscordClientService
   ) {}
@@ -46,6 +53,8 @@ export class MessageService implements OnModuleInit {
   async onModuleInit() {
     this.chatGPTService =
       this.grpcClient.getService<ChatGPTService>('ChatGPTService');
+    this.llmAIService =
+      this.llmaiGrpcClient.getService<LLMAIService>('LLMAIService');
 
     this.metadata.set('authorization', this.options.config.rpcApiKey);
     this.metadata.set('azure-service', `${this.options.config.isAzureService}`);
@@ -286,46 +295,46 @@ export class MessageService implements OnModuleInit {
   async createResponse(message: Message<boolean>) {
     message = await this.getRefreshedMessage(message);
 
-    try {
-      // show typing
-      await (message.channel as TextChannel).sendTyping();
+    // show typing
+    await (message.channel as TextChannel).sendTyping();
+    const request$ = new ReplaySubject<ChatOptions>();
+    request$.next({
+      userInput: message.content,
+    });
+    request$.complete();
 
-      // fetch all replied messages
-      let messageStack = await this.setupHistoryMessages(message);
+    const subscription = this.llmAIService
+      .chatStream(request$, this.metadata)
+      .pipe(
+        switchMap(async (result) => {
+          const isMessage = result.event === 'message';
 
-      // if has ogg speech, convert to text
-      if (this.isOggSpeechRef(message)) {
-        messageStack = await this.setupOggSpeech(messageStack);
-      }
+          const response = isMessage
+            ? JSON.parse(result.data).response
+            : result.data;
 
-      this.asgardLogger.log(`setting up request...`);
-      const request = await this.setupGeneralHistoryMessages(messageStack);
-      request.forEach((r) =>
-        this.asgardLogger.log(`${r.role}, ${r.name}: ${r.content}`)
-      );
-      this.asgardLogger.log(`setting up response...`);
+          isMessage && (await this.sendMessageReply(response, message));
 
-      const result = await this.responseUser(request, message.author.id);
-      const response = result.response;
-
-      this.asgardLogger.log(`successfully get response`);
-
-      this.asgardLogger.log(`prepare to send message...`);
-      await (message.channel as TextChannel).sendTyping();
-
-      await this.sendMessageReply(response, message, result.tokens);
-      this.asgardLogger.log(`successfully send message: ${response}`);
-      this.asgardLogger.log(`successfully send message`);
-    } catch (e) {
-      this.asgardLogger.error(e);
-      await this.sendMessageReply(
-        `很遺憾，目前暫時無法服務您。請稍後再試， Message: ${e?.message}`,
-        message
-      );
-    }
+          this.asgardLogger.log(`successfully send message: ${response}`);
+        }),
+        catchError(async (e) => {
+          this.asgardLogger.error(e);
+          await this.sendMessageReply(
+            `很遺憾，目前暫時無法服務您。請稍後再試， Message: ${e?.message}`,
+            message
+          );
+          return;
+        })
+      )
+      .subscribe({
+        complete: () => {
+          this.asgardLogger.log(`complete subscription`);
+          subscription.unsubscribe();
+        },
+      });
   }
 
-  private async getRefreshedMessage(message: Message<boolean>) {
+  async getRefreshedMessage(message: Message<boolean>) {
     const client = this.discordClientService.dClient;
     const refreshedChannel: TextChannel = (await client.channels.fetch(
       message.channelId,

@@ -51,7 +51,7 @@ export class TXTChatGptService extends BaseFeatureChatGPTService<TXTAdapter> {
         this.asgardLogger.log(`percentage: ${formatted}`);
         await delay(Math.random() * 500 + 256);
       })
-      .process(async (content, index, pool) => {
+      .process(async (content, index) => {
         const summary = await this.getTXTSummary(content, {
           user,
           partNumber: index + 1,

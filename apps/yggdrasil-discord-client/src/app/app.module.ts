@@ -20,6 +20,7 @@ import { IRedisConfig, redisConfig } from './config/redis.config';
 import {
   ICoreEngineConfig,
   coreEngineConfig,
+  coreEngineLLMAIConfig,
 } from './config/core.engine.config';
 @Module({
   imports: [
@@ -30,7 +31,13 @@ import {
           isGlobal: true,
           cache: true,
           // for local development
-          load: [appConfig, discordBotConfig, redisConfig, coreEngineConfig],
+          load: [
+            appConfig,
+            discordBotConfig,
+            redisConfig,
+            coreEngineConfig,
+            coreEngineLLMAIConfig,
+          ],
           // if NODE_ENV is not development, ignore .env file
           ignoreEnvFile: !isDev,
           expandVariables: true,
@@ -88,6 +95,26 @@ import {
               return {
                 transport: Transport.REDIS,
                 options: {
+                  ...config,
+                },
+              };
+            },
+            inject: [ConfigService],
+          },
+          {
+            name: 'LLMAI_PACKAGE',
+            useFactory: (configService: ConfigService) => {
+              const config = configService.get<ICoreEngineConfig>(
+                ConfigPath.CORE_ENGINE_LLM_AI
+              );
+              return {
+                transport: Transport.GRPC,
+                options: {
+                  loader: {
+                    keepCase: true,
+                    objects: true,
+                    arrays: true,
+                  },
                   ...config,
                 },
               };

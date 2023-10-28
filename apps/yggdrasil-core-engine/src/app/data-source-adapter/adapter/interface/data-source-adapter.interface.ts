@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export interface IDataSourceAdapter {
   getData<T>(url: string): Promise<T>;
   getDataFromPath<T>(path: string, asExtension: string): Promise<T>;

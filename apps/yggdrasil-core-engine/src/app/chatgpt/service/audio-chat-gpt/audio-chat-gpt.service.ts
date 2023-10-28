@@ -103,7 +103,7 @@ export class AudioChatGPTService extends BaseFeatureChatGPTService<AudioAdapter>
         this.asgardLogger.log(`percentage: ${formatted}`);
         await delay(Math.random() * 500 + 256);
       })
-      .process(async (path, index, pool) => {
+      .process(async (path, index) => {
         const transcriptionResponse =
           await this.getAdapter().getDataFromPath<PartCreateTranscriptionResponse>(
             path
@@ -116,7 +116,9 @@ export class AudioChatGPTService extends BaseFeatureChatGPTService<AudioAdapter>
       });
 
     promisePool.errors?.length > 0 &&
-      promisePool.errors.forEach((e) => this.asgardLogger.error(e.raw, e.stack, e));
+      promisePool.errors.forEach((e) =>
+        this.asgardLogger.error(e.raw, e.stack, e)
+      );
     const results = promisePool.results.filter(
       (r) => r !== undefined && (r as any) !== Symbol.for('failed')
     );

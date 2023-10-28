@@ -1,12 +1,50 @@
-version: '3.5'
+version: '3.8'
 
 services:
+  mongo1:
+    container_name: mongo1
+    image: mongo:7.0
+    volumes:
+      - ./docker-data/mongodb-data/data1:/data/db
+      - ./scripts/rs-init.sh:/scripts/rs-init.sh
+    networks:
+      - mongors-network-asgard
+    ports:
+      - 27017:27017
+    links:
+      - mongo2
+      - mongo3
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+  mongo2:
+    container_name: mongo2
+    image: mongo:7.0
+    volumes:
+      - ./docker-data/mongodb-data/data2:/data/db
+    networks:
+      - mongors-network-asgard
+    ports:
+      - 27022:27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+  mongo3:
+    container_name: mongo3
+    image: mongo:7.0
+    volumes:
+      - ./docker-data/mongodb-data/data3:/data/db
+    networks:
+      - mongors-network-asgard
+    ports:
+      - 27023:27017
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
   redis:
-    image: redis:4
+    image: redis:7
     ports: ['6379:6379']
+    networks:
+      - mongors-network-asgard
     volumes:
       - ./docker-data/redis-data:/data
-volumes:
-  mongodb-data:
-  redis-data:
-
+networks:
+  mongors-network-asgard:
+    driver: bridge

@@ -9,7 +9,19 @@ import { validateYoutubeUrl } from './utils/validate-youtube-url';
 import { DataSourceType } from './interface/data-source-type.enum';
 import { ClientProxy } from '@nestjs/microservices';
 import { DiscordClientService } from './services/discord-client/discord-client.service';
-import { lastValueFrom } from 'rxjs';
+import {
+  Subject,
+  catchError,
+  finalize,
+  forkJoin,
+  from,
+  lastValueFrom,
+  of,
+  switchMap,
+  take,
+  takeUntil,
+  toArray,
+} from 'rxjs';
 
 @Injectable()
 export class DiscordBotService implements OnApplicationBootstrap {
@@ -61,127 +73,174 @@ export class DiscordBotService implements OnApplicationBootstrap {
   };
 
   // message create listeners
-  private messageCreateListeners = async (
-    message: Message<boolean>
-  ): Promise<void> => {
-    if (message.author.bot) return;
-
-    const isNotNeedToResponse = this.isNotNeedToResponse(message);
-    if (isNotNeedToResponse) {
-      this.asgardLogger.log('not prod and not develop channel, so no response');
-      return;
-    }
-
-    const isDisableBotChannel = this.isDisableBotChannel(message);
-    if (isDisableBotChannel) {
-      this.asgardLogger.log('this channel is disable bot channel');
-      return;
-    }
-
-    const isNeedToResponse = this.isNeedToResponse(message);
-    this.asgardLogger.verbose(`isUserCreateMessage: ${isNeedToResponse}`);
-
-    // if message is a reply
-    this.asgardLogger.log(
-      `message is a reply: ${message?.reference ? true : false}`
-    );
-    if (await this.isReferenceAndNeedToResponse(message)) {
-      this.asgardLogger.verbose('is a reply message');
-      this.botClient.emit('chatbot:discord:chat', message);
-      return;
-    }
-
-    if (!isNeedToResponse) {
-      this.asgardLogger.log('not user create message, so no response');
-      return;
-    }
-
-    // if message is a url
-    const messageContent = message.content
-      .replace(`<@${this.options.discordOptions.discordBotClientId}>`, '')
-      .trim();
-
-    //validate youtube url
-    const isYtRequest = validateYoutubeUrl(messageContent);
-    if (isYtRequest) {
-      this.asgardLogger.log(`message is a youtube url: ${isYtRequest}`);
-      if (
-        !this.options.discordOptions?.alphaWhitelistedUserIds?.includes(
-          message.author.id
-        )
-      ) {
-        this.botClient.emit('chatbot:discord:chat:reply', {
-          text: '🎁 目前只有白名單的人才能使用此功能，請聯絡管理員開通',
-          message,
-        });
-        return;
-      }
-
-      this.botClient.emit('chatbot:discord:chat:url:youtube', message);
-      return;
-    }
-
-    if (this.hasPDFAttachment(message)) {
-      this.botClient.emit('chatbot:discord:chat:url:docs', {
-        message,
-        type: DataSourceType.PDF,
-      });
-      return;
-    }
-
-    if (this.hasTXTAttachment(message)) {
-      this.botClient.emit('chatbot:discord:chat:url:docs', {
-        message,
-        type: DataSourceType.TXT,
-      });
-
-      return;
-    }
-
-    if (this.hasImageAttachment(message)) {
-      this.botClient.emit('chatbot:discord:chat:url:docs', {
-        message,
-        type: DataSourceType.TXT,
-      });
-
-      return;
-    }
-
-    if (messageContent.startsWith('url')) {
-      this.botClient.emit('chatbot:discord:chat:url:docs', {
-        message,
-        type: DataSourceType.URL,
-      });
-
-      return;
-    }
-
-    if (this.hasAudioWithMP3OrWAVAttachment(message)) {
-      this.botClient.emit('chatbot:discord:chat:audio:transcription', message);
-      return;
-    }
-
-    if (this.hasAudioAttachment(message)) {
-      const transcriptionMessage = await lastValueFrom(
-        this.botClient.send('chatbot:discord:chat:audio:transcription', message)
-      );
-
-      if (!this.isPermanentChannel(message)) {
-        this.asgardLogger.log('not in permanent channel, so no response');
-        return;
-      }
-
-      message.content = transcriptionMessage?.content;
-    }
-
-    if (this.isEmptyMessage(message)) {
-      this.asgardLogger.log('message is empty, so no response');
-      return;
-    }
-
-    this.botClient.emit('chatbot:discord:chat', message);
-    return;
+  private messageCreateListeners = (message: Message<boolean>) => {
+    this.messageCreateListenerObservers(message).subscribe({
+      error: (e) => {
+        this.asgardLogger.error(e);
+      },
+      complete: () => {
+        this.asgardLogger.log(`${message?.author} create listener complete`);
+      },
+    });
   };
+
+  private messageCreateListenerObservers(message: Message<boolean>) {
+    const stopSignal$ = new Subject();
+    return forkJoin([
+      of(this.checkIsBotMessage(message)),
+      of(this.checkShouldReply(message)),
+      of(this.checkIsDisableBotChannel(message)),
+    ]).pipe(
+      switchMap((mods) => {
+        if (mods.some((mod) => mod === true)) {
+          stopSignal$.next('STOP');
+        }
+        return of(message);
+      }),
+      switchMap(async (message) => {
+        const isNeedToResponse = this.isNeedToResponse(message);
+        this.asgardLogger.verbose(`isUserCreateMessage: ${isNeedToResponse}`);
+
+        // if message is a reply
+        this.asgardLogger.log(
+          `message have reference: ${message?.reference ? true : false}`
+        );
+        if (await this.isReferenceAndNeedToResponse(message)) {
+          this.asgardLogger.verbose('is a reply message');
+          return this.botClient.emit('chatbot:discord:chat', message);
+        }
+
+        if (!isNeedToResponse) {
+          return this.asgardLogger.log(
+            'not user create message, so no response'
+          );
+        }
+
+        // if message is a url
+        const messageContent = message.content
+          .replace(`<@${this.options.discordOptions.discordBotClientId}>`, '')
+          .trim();
+
+        //validate youtube url
+        const isYtRequest = validateYoutubeUrl(messageContent);
+        if (isYtRequest) {
+          this.asgardLogger.log(`message is a youtube url: ${isYtRequest}`);
+          if (
+            !this.options.discordOptions?.alphaWhitelistedUserIds?.includes(
+              message.author.id
+            )
+          ) {
+            return this.botClient.emit('chatbot:discord:chat:reply', {
+              text: '🎁 目前只有白名單的人才能使用此功能，請聯絡管理員開通',
+              message,
+            });
+          }
+
+          return this.botClient.emit(
+            'chatbot:discord:chat:url:youtube',
+            message
+          );
+        }
+
+        if (this.hasPDFAttachment(message)) {
+          return this.botClient.emit('chatbot:discord:chat:url:docs', {
+            message,
+            type: DataSourceType.PDF,
+          });
+        }
+
+        if (this.hasTXTAttachment(message)) {
+          return this.botClient.emit('chatbot:discord:chat:url:docs', {
+            message,
+            type: DataSourceType.TXT,
+          });
+        }
+
+        if (this.hasImageAttachment(message)) {
+          return this.botClient.emit('chatbot:discord:chat:url:docs', {
+            message,
+            type: DataSourceType.TXT,
+          });
+        }
+
+        if (messageContent.startsWith('url')) {
+          return this.botClient.emit('chatbot:discord:chat:url:docs', {
+            message,
+            type: DataSourceType.URL,
+          });
+        }
+
+        if (this.hasAudioWithMP3OrWAVAttachment(message)) {
+          return this.botClient.emit(
+            'chatbot:discord:chat:audio:transcription',
+            message
+          );
+        }
+
+        if (this.hasAudioAttachment(message)) {
+          const transcriptionMessage = await lastValueFrom(
+            this.botClient.send(
+              'chatbot:discord:chat:audio:transcription',
+              message
+            )
+          );
+
+          if (!this.isPermanentChannel(message)) {
+            return this.asgardLogger.log(
+              'not in permanent channel, so no response'
+            );
+          }
+
+          message.content = transcriptionMessage?.content;
+        }
+
+        if (this.isEmptyMessage(message)) {
+          return this.asgardLogger.log('message is empty, so no response');
+        }
+
+        return this.botClient.emit('chatbot:discord:llm:ai:chat', message);
+      }),
+      takeUntil(stopSignal$),
+      catchError((e) => {
+        this.asgardLogger.error(e?.message, e?.stack, e);
+        return of(e);
+      }),
+      finalize(() => {
+        this.asgardLogger.debug('message create listener finalize');
+      })
+    );
+  }
+
+  private checkIsDisableBotChannel(message: Message<boolean>): boolean {
+    return (() => {
+      const isDisableBotChannel = this.isDisableBotChannel(message);
+      if (isDisableBotChannel) {
+        this.asgardLogger.log('this channel is disable bot channel');
+      }
+
+      return isDisableBotChannel;
+    })();
+  }
+
+  private checkShouldReply(message: Message<boolean>): boolean {
+    return (() => {
+      const isNotNeedToResponse = this.isNotNeedToResponse(message);
+
+      if (isNotNeedToResponse) {
+        this.asgardLogger.log(
+          'not prod and not develop channel, so no response'
+        );
+      }
+
+      return isNotNeedToResponse;
+    })();
+  }
+
+  private checkIsBotMessage(message: Message<boolean>): boolean {
+    return (() => {
+      if (message.author.bot) return true;
+    })();
+  }
 
   private isNeedToResponse(message: Message<boolean>) {
     const atBot = `<@${this.options.discordOptions.discordBotClientId}>`;

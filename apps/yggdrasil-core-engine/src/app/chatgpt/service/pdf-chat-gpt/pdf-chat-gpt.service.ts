@@ -51,7 +51,7 @@ export class PDFChatGPTService extends BaseFeatureChatGPTService<PDFAdapter> {
         this.asgardLogger.log(`percentage: ${formatted}`);
         await delay(Math.random() * 500 + 256);
       })
-      .process(async (content, index, pool) => {
+      .process(async (content, index) => {
         const summary = await this.getPDFSummary(content, {
           user,
           partNumber: index + 1,

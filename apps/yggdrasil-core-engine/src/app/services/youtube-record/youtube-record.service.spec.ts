@@ -1,9 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { YoutubeRecordService } from './youtube-record.service';
-import { ModuleMocker, MockFunctionMetadata } from 'jest-mock';
 import { YTRecord } from '../../mongo/schemas/yt.record.schema';
-
-const moduleMocker = new ModuleMocker(global);
 
 describe('YoutubeRecordService', () => {
   it('test_create_record_successfully', async () => {

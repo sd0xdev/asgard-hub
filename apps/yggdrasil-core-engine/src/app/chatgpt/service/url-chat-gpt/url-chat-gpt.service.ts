@@ -50,7 +50,7 @@ export class URLChatGPTService extends BaseFeatureChatGPTService<URLAdapter> {
         this.asgardLogger.log(`percentage: ${formatted}`);
         await delay(Math.random() * 500 + 256);
       })
-      .process(async (content, index, pool) => {
+      .process(async (content, index) => {
         const summary = await this.getURLSummary(content, {
           title,
           user,

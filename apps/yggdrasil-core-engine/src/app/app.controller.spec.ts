@@ -41,7 +41,7 @@ describe('AppController', () => {
 
   describe('getData', () => {
     it('should return "Hello API"', () => {
-      return;
+      expect(app.get<AppController>(AppController)).toBeDefined();
     });
   });
 });

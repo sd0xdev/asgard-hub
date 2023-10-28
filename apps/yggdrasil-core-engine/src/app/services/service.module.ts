@@ -14,10 +14,12 @@ import { isDev, isStaging, isProd } from '../constants/common.constant';
 import { NestOpenAIClientModule } from '@sd0x/nest-openai-client';
 import { IAzureOpenAIConfig } from '../config/azure.openai.config';
 import { IOpenAIConfig } from '../config/open.ai.config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Global()
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     NestOpenAIClientModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
         apiKey: configService.get<IOpenAIConfig>(ConfigPath.OpenAI).apiKey,

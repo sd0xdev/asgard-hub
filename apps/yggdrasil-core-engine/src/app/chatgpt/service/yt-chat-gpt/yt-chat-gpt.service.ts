@@ -1,4 +1,4 @@
-import { Injectable, Scope } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ChatGPTGateWayService } from '../../../services/chatgpt-gateway-service/chatgpt.service';
 import PromisePool from '@supercharge/promise-pool/dist';
 import { splitAudioFile } from '@asgard-hub/utils';
@@ -83,7 +83,7 @@ export class YTChatGPTService extends BaseFeatureChatGPTService<YoutubeAdapter> 
           this.asgardLogger.log(`percentage: ${formatted}`);
           await delay(Math.random() * 500 + 256);
         })
-        .process(async (path, index, pool) => {
+        .process(async (path, index) => {
           const { summary, transcription } = await this.getYoutubeSummary(
             path,
             {

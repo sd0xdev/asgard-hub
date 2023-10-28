@@ -1,31 +1,35 @@
-import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
+import { Metadata } from '@grpc/grpc-js';
 import { Controller, UseGuards } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { AuthGuard } from '../auth/auth.guard';
-import { ChatGPTGateWayService } from '../services/chatgpt-gateway-service/chatgpt.service';
+import { AuthGuard } from '../../auth/auth.guard';
+import { ChatGPTGateWayService } from '../../services/chatgpt-gateway-service/chatgpt.service';
 import {
   GeneralMessagesOptions,
   GPTResponseOptions,
   CompletionResponseOptions,
   YTSummaryOptions,
   URLDocSummaryOptions,
-} from '../chatgpt/interface/chatgpt.service.interface';
+} from '../../chatgpt/interface/chatgpt.service.interface';
 import {
   GatewayFeature,
   GatewayService,
-} from '../chatgpt/service/gateway-service/gateway-service.service';
-import { DataSourceType } from '../data-source-adapter/adapter/interface/data-source-type.enum';
-import { ImageChatGptService } from '../chatgpt/service/image-chat-gpt/image-chat-gpt.service';
-import { TXTChatGptService } from '../chatgpt/service/txt-chat-gpt/txt-chat-gpt.service';
-import { URLChatGPTService } from '../chatgpt/service/url-chat-gpt/url-chat-gpt.service';
-import { PDFChatGPTService } from '../chatgpt/service/pdf-chat-gpt/pdf-chat-gpt.service';
-import { YTChatGPTService } from '../chatgpt/service/yt-chat-gpt/yt-chat-gpt.service';
+} from '../../chatgpt/service/gateway-service/gateway-service.service';
+import { DataSourceType } from '../../data-source-adapter/adapter/interface/data-source-type.enum';
+import { ImageChatGptService } from '../../chatgpt/service/image-chat-gpt/image-chat-gpt.service';
+import { TXTChatGptService } from '../../chatgpt/service/txt-chat-gpt/txt-chat-gpt.service';
+import { URLChatGPTService } from '../../chatgpt/service/url-chat-gpt/url-chat-gpt.service';
+import { PDFChatGPTService } from '../../chatgpt/service/pdf-chat-gpt/pdf-chat-gpt.service';
+import { YTChatGPTService } from '../../chatgpt/service/yt-chat-gpt/yt-chat-gpt.service';
 import {
   AudioChatGPTService,
   AudioChatOptions,
-} from '../chatgpt/service/audio-chat-gpt/audio-chat-gpt.service';
+} from '../../chatgpt/service/audio-chat-gpt/audio-chat-gpt.service';
 import { ChatGPTChant } from '@asgard-hub/utils';
 
+/**
+ * @deprecated This controller is a v1 feature and will be removed in future versions. Please use the LLMAIController instead.
+ */
+@UseGuards(AuthGuard)
 @Controller()
 export class ChatGPTController {
   constructor(
@@ -33,13 +37,8 @@ export class ChatGPTController {
     private readonly gatewayService: GatewayService
   ) {}
 
-  @UseGuards(AuthGuard)
   @GrpcMethod('ChatGPTService')
-  generalMessages(
-    data: GeneralMessagesOptions,
-    metadata: Metadata,
-    call: ServerUnaryCall<any, any>
-  ) {
+  generalMessages(data: GeneralMessagesOptions) {
     const result = this.service.generalMessages(
       data.chant as ChatGPTChant,
       data.customPrompt
@@ -49,13 +48,8 @@ export class ChatGPTController {
     };
   }
 
-  @UseGuards(AuthGuard)
   @GrpcMethod('ChatGPTService', 'FetchGgtResponse')
-  fetchGptResponse(
-    data: GPTResponseOptions,
-    metadata: Metadata,
-    call: ServerUnaryCall<any, any>
-  ) {
+  fetchGptResponse(data: GPTResponseOptions, metadata: Metadata) {
     const fromMetaData = (metadata.get('azure-service') ?? [])[0] ?? false;
     const isUseAzure = fromMetaData === 'true';
     const temperature = data?.temperature ?? 1;
@@ -73,13 +67,8 @@ export class ChatGPTController {
     return result;
   }
 
-  @UseGuards(AuthGuard)
   @GrpcMethod('ChatGPTService', 'FetchGgtResponseStream')
-  fetchGptResponseStream(
-    data: GPTResponseOptions,
-    metadata: Metadata,
-    call: ServerUnaryCall<any, any>
-  ) {
+  fetchGptResponseStream(data: GPTResponseOptions, metadata: Metadata) {
     const fromMetaData = (metadata.get('azure-service') ?? [])[0] ?? false;
     const isUseAzure = fromMetaData === 'true';
     const temperature = data?.temperature ?? 1;
@@ -97,13 +86,8 @@ export class ChatGPTController {
     return result;
   }
 
-  @UseGuards(AuthGuard)
   @GrpcMethod('ChatGPTService', 'GetCompletionResponse')
-  async getCompletionResponse(
-    data: CompletionResponseOptions,
-    metadata: Metadata,
-    call: ServerUnaryCall<any, any>
-  ) {
+  async getCompletionResponse(data: CompletionResponseOptions) {
     const result = await this.service.getCompletionResponse(
       data.prompt,
       data.model
@@ -112,13 +96,8 @@ export class ChatGPTController {
   }
 
   // fetch Youtube Summary
-  @UseGuards(AuthGuard)
   @GrpcMethod('ChatGPTService', 'FetchYoutubeSummary')
-  async fetchYoutubeSummaryWithGPT(
-    data: YTSummaryOptions,
-    metadata: Metadata,
-    call: ServerUnaryCall<any, any>
-  ) {
+  async fetchYoutubeSummaryWithGPT(data: YTSummaryOptions) {
     const result = await this.gatewayService
       .getFeatureService<YTChatGPTService>(GatewayFeature.YT)
       .fetchSummaryWithGPT(data);
@@ -128,13 +107,8 @@ export class ChatGPTController {
   }
 
   // fetch Docs Summary
-  @UseGuards(AuthGuard)
   @GrpcMethod('ChatGPTService', 'FetchUrlDocSummary')
-  async fetchPDFSummaryWithGPT(
-    data: URLDocSummaryOptions,
-    metadata: Metadata,
-    call: ServerUnaryCall<any, any>
-  ) {
+  async fetchPDFSummaryWithGPT(data: URLDocSummaryOptions) {
     let result = [];
 
     switch (data.dataSourceType) {
@@ -168,13 +142,8 @@ export class ChatGPTController {
   }
 
   // fetch audio transcription
-  @UseGuards(AuthGuard)
   @GrpcMethod('ChatGPTService', 'FetchAudioTranscription')
-  async fetchAudioTranscription(
-    data: AudioChatOptions,
-    metadata: Metadata,
-    call: ServerUnaryCall<any, any>
-  ) {
+  async fetchAudioTranscription(data: AudioChatOptions) {
     const result = await this.gatewayService
       .getFeatureService<AudioChatGPTService>(GatewayFeature.Audio)
       .fetchDataByDataSourceUrl(data);
